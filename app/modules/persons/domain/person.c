@@ -4,7 +4,7 @@
 
 #include <uuid/uuid.h>
 
-#include "../../dates/domain/date.h"
+#include "../../../shared_kernel/dates/date.h"
 #include "person.h"
 
 char **copy_person_stack(char **stack) {

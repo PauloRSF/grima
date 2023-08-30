@@ -8,7 +8,7 @@
 #include <uuid/uuid.h>
 
 #include "../../../database.h"
-#include "../../dates/domain/date.h"
+#include "../../../shared_kernel/dates/date.h"
 #include "../domain/person.h"
 
 char **get_person_stack(PGconn *database_connection, uuid_t id) {

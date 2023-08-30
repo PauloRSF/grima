@@ -12,7 +12,7 @@
 
 #include "../../../app.h"
 #include "../../../database.h"
-#include "../../dates/domain/date.h"
+#include "../../../shared_kernel/dates/date.h"
 #include "../domain/person.h"
 #include "../domain/person_repository.h"
 

@@ -4,7 +4,7 @@
 #include <cJSON.h>
 #include <uuid/uuid.h>
 
-#include "../../dates/domain/date.h"
+#include "../../../shared_kernel/dates/date.h"
 
 typedef struct person {
   uuid_t id;
