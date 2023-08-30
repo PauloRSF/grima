@@ -24,7 +24,7 @@ Method get_method_by_name(char *method_name) {
 Request parse_request(char *raw_request) {
   struct phr_header headers[100];
   const char *method = NULL, *path = NULL;
-  size_t buffer_length = 0, path_length = 0, method_length = 0, num_headers = 0;
+  size_t buffer_length, path_length, method_length, num_headers;
   int minor_version;
 
   int pret = phr_parse_request(raw_request, strlen(raw_request), &method,

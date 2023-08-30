@@ -104,6 +104,36 @@ Person *person_repository_get_by_id(PGconn *database_connection, uuid_t id) {
   return person;
 }
 
+bool person_repository_is_nickname_taken(PGconn *database_connection,
+                                         char *nickname) {
+  const char *paramValues[1];
+  int paramLengths[1];
+  int paramFormats[1];
+
+  paramValues[0] = nickname;
+  paramLengths[0] = strlen(nickname);
+  paramFormats[0] = 0;
+
+  PGresult *res = PQexecParams(
+      database_connection, "SELECT * FROM persons WHERE nickname = $1", 1, NULL,
+      paramValues, paramLengths, paramFormats, 0);
+
+  if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+    fprintf(stderr, "SELECT failed: %s", PQerrorMessage(database_connection));
+    PQclear(res);
+
+    return false;
+  }
+
+  if (PQntuples(res) < 1) {
+    PQclear(res);
+
+    return false;
+  }
+
+  return true;
+}
+
 size_t person_repository_count(PGconn *database_connection) {
   PGresult *res = PQexec(database_connection,
                          "SELECT COUNT(id) as persons_count FROM persons");

@@ -71,6 +71,9 @@ size_t count_person_json_stack_items(cJSON *stack_json) {
 }
 
 char **copy_person_json_stack_items(cJSON *stack_json) {
+  if (stack_json == NULL || !cJSON_IsArray(stack_json))
+    return NULL;
+
   size_t i = 0;
   cJSON *stack_item;
   size_t stack_items_count = count_person_json_stack_items(stack_json);

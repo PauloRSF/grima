@@ -7,6 +7,7 @@
 
 #include "../../../../../http/server.h"
 #include "../../../../app.h"
+#include "../../../../shared_kernel/interface/http/http.h"
 #include "../../application/create_person.c"
 #include "../../domain/person.h"
 #include "../../domain/person_repository.h"
@@ -37,13 +38,20 @@ void create_person_handler(AppContext *app_ctx, Request request,
     return send_response(&app_ctx->server_context, response);
   }
 
+  Error *error = NULL;
+
   Person *saved_person =
-      create_person_use_case(app_ctx->database_context, person_json);
+      create_person_use_case(app_ctx->database_context, person_json, &error);
 
   cJSON_free(person_json);
 
   if (saved_person == NULL) {
-    response.status_code = 500;
+    if (error) {
+      get_response_for_error(error, &response);
+    } else {
+      response.status_code = 500;
+    }
+
     return send_response(&app_ctx->server_context, response);
   }
 
