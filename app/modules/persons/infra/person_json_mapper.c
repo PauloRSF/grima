@@ -40,13 +40,15 @@ char *person_to_json(Person *person) {
 
   free(date_of_birth_string);
 
-  cJSON *stack = cJSON_AddArrayToObject(json, "stack");
-
   if (person->stack != NULL) {
+    cJSON *stack = cJSON_AddArrayToObject(json, "stack");
+
     for (int i = 0; person->stack[i] != NULL; ++i) {
       cJSON *tech = cJSON_CreateString(person->stack[i]);
       cJSON_AddItemToArray(stack, tech);
     }
+  } else {
+    cJSON_AddNullToObject(json, "stack");
   }
 
   char *json_person = cJSON_Print(json);
