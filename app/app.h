@@ -8,7 +8,7 @@
 
 typedef struct app_context {
   ServerContext server_context;
-  DatabaseContext *database_connection;
+  DatabaseContext *database_context;
 } AppContext;
 
 void start_app(int port, AppContext *ctx);

@@ -7,6 +7,7 @@
 
 #include "app.h"
 #include "database.h"
+#include "modules/persons/interface/http/persons_handler.c"
 
 AppContext app_ctx;
 
@@ -33,7 +34,7 @@ void handle_request(ServerContext *server_ctx, Request request,
     return handle_ping_endpoint(server_ctx, request, response);
 
   if (strncmp(request.path, "/pessoas", strlen("/pessoas")) == 0)
-    return handle_persons_endpoint(&app_ctx, request, response);
+    return persons_handler(&app_ctx, request, response);
 
   response.status_code = 404;
 
@@ -43,22 +44,20 @@ void handle_request(ServerContext *server_ctx, Request request,
 void start_app(int port, AppContext *ctx) {
   log_info("Connecting to database...");
 
-  app_ctx.database_connection = connect_database(getenv("DATABASE_URI"));
+  app_ctx.database_context = connect_database(getenv("DATABASE_URI"));
 
   log_info("Starting server...");
 
-  app_ctx.server_context = start_server(port);
+  app_ctx.server_context = init_server(port);
 
   ctx = &app_ctx;
 
   log_info("Listening in port %d", port);
 
-  while (true) {
-    accept_connection(&app_ctx.server_context, handle_request);
-  }
+  start_server(&app_ctx.server_context, handle_request);
 }
 
 void shutdown_app(AppContext ctx) {
   shutdown_server(ctx.server_context);
-  shutdown_database(ctx.database_connection);
+  shutdown_database(ctx.database_context);
 };

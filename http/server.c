@@ -10,42 +10,6 @@
 #include "response.h"
 #include "server.h"
 
-ServerContext start_server(int port) {
-  int server_descriptor;
-
-  struct sockaddr_in address = {.sin_family = AF_INET,
-                                .sin_addr = {.s_addr = INADDR_ANY},
-                                .sin_port = htons(port)};
-
-  socklen_t address_size = sizeof(address);
-
-  server_descriptor = socket(AF_INET, SOCK_STREAM, 0);
-
-  if (server_descriptor == -1) {
-    perror("Could not open server socket");
-    exit(errno);
-  }
-
-  int bind_result =
-      bind(server_descriptor, (struct sockaddr *)&address, address_size);
-
-  if (bind_result == -1) {
-    perror("Could not bind server socket");
-    exit(errno);
-  }
-
-  int listen_result = listen(server_descriptor, 1);
-
-  if (listen_result == -1) {
-    perror("Could not listen in server socket");
-    exit(errno);
-  }
-
-  ServerContext ctx = {.server_descriptor = server_descriptor};
-
-  return ctx;
-};
-
 void shutdown_server(ServerContext ctx) {
   close(ctx.client_socket_descriptor);
   shutdown(ctx.server_descriptor, SHUT_RDWR);
@@ -108,3 +72,47 @@ void accept_connection(ServerContext *ctx,
 
   close(ctx->client_socket_descriptor);
 };
+
+ServerContext init_server(int port) {
+  int server_descriptor;
+
+  struct sockaddr_in address = {.sin_family = AF_INET,
+                                .sin_addr = {.s_addr = INADDR_ANY},
+                                .sin_port = htons(port)};
+
+  socklen_t address_size = sizeof(address);
+
+  server_descriptor = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (server_descriptor == -1) {
+    perror("Could not open server socket");
+    exit(errno);
+  }
+
+  int bind_result =
+      bind(server_descriptor, (struct sockaddr *)&address, address_size);
+
+  if (bind_result == -1) {
+    perror("Could not bind server socket");
+    exit(errno);
+  }
+
+  int listen_result = listen(server_descriptor, 1);
+
+  if (listen_result == -1) {
+    perror("Could not listen in server socket");
+    exit(errno);
+  }
+
+  ServerContext ctx = {.server_descriptor = server_descriptor};
+
+  return ctx;
+};
+
+void start_server(ServerContext *ctx,
+                  void (*handle_request)(ServerContext *ctx, Request request,
+                                         Response response)) {
+  while (true) {
+    accept_connection(ctx, handle_request);
+  }
+}
