@@ -15,6 +15,7 @@
 #define HTTP_NOT_FOUND_TEXT "Not Found"
 #define HTTP_METHOD_NOT_ALLOWED_TEXT "Method Not Allowed"
 #define HTTP_UNSUPPORTED_MEDIA_TYPE_TEXT "Unsupported Media Type"
+#define HTTP_UNPROCESSABLE_ENTITY_TEXT "Unprocessable Entity"
 
 #define HTTP_METHOD_LENGTH 3
 #define CRLF_LENGTH 2
@@ -40,35 +41,31 @@ char *get_status_line(unsigned short status_code) {
 
   switch (status_code) {
   case 200:
-    status_text = (char *)calloc(1, strlen(HTTP_OK_TEXT) + 1);
-    sprintf(status_text, HTTP_OK_TEXT);
+    status_text = HTTP_OK_TEXT;
     break;
   case 201:
-    status_text = (char *)calloc(1, strlen(HTTP_CREATED_TEXT) + 1);
-    sprintf(status_text, HTTP_CREATED_TEXT);
+    status_text = HTTP_CREATED_TEXT;
     break;
   case 400:
-    status_text = (char *)calloc(1, strlen(HTTP_BAD_REQUEST_TEXT) + 1);
-    sprintf(status_text, HTTP_BAD_REQUEST_TEXT);
+    status_text = HTTP_BAD_REQUEST_TEXT;
     break;
   case 404:
-    status_text = (char *)calloc(1, strlen(HTTP_NOT_FOUND_TEXT) + 1);
-    sprintf(status_text, HTTP_NOT_FOUND_TEXT);
+    status_text = HTTP_NOT_FOUND_TEXT;
     break;
   case 405:
-    status_text = (char *)calloc(1, strlen(HTTP_METHOD_NOT_ALLOWED_TEXT) + 1);
-    sprintf(status_text, HTTP_METHOD_NOT_ALLOWED_TEXT);
+    status_text = HTTP_METHOD_NOT_ALLOWED_TEXT;
     break;
   case 415:
-    status_text =
-        (char *)calloc(1, strlen(HTTP_UNSUPPORTED_MEDIA_TYPE_TEXT) + 1);
-    sprintf(status_text, HTTP_UNSUPPORTED_MEDIA_TYPE_TEXT);
+    status_text = HTTP_UNSUPPORTED_MEDIA_TYPE_TEXT;
+    break;
+  case 422:
+    status_text = HTTP_UNPROCESSABLE_ENTITY_TEXT;
     break;
   }
 
   char *status_line =
       (char *)calloc(1, strlen(HTTP_VERSION) + strlen(status_text) +
-                            HTTP_METHOD_LENGTH + CRLF_LENGTH + 2);
+                            HTTP_METHOD_LENGTH + CRLF_LENGTH + 4);
 
   sprintf(status_line, "%s %d %s\r\n", HTTP_VERSION, status_code, status_text);
 
@@ -97,9 +94,9 @@ char *build_http_response_payload(Response response) {
     response_payload_length += strlen(headers_payload);
 
   if (response.body != NULL)
-    response_payload_length += strlen(response.body);
+    response_payload_length += strlen(response.body + CRLF_LENGTH * 2);
 
-  response_payload = (char *)calloc(1, response_payload_length + 1);
+  response_payload = (char *)calloc(1, response_payload_length + 10);
 
   strcpy(response_payload, status_line);
 
