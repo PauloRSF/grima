@@ -1,15 +1,10 @@
-#ifndef GRIMA_APP_H
-#define GRIMA_APP_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <log.h>
-#include "../http/server.c"
 
-typedef struct app_context {
-  ServerContext server_context;
-} AppContext;
+#include "app.h"
 
 AppContext ctx;
 
@@ -88,4 +83,3 @@ void start_app(int port) {
 }
 
 void shutdown_app(AppContext ctx) { shutdown_server(ctx.server_context); };
-#endif
