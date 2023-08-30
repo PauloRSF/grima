@@ -18,6 +18,7 @@ typedef struct request {
   Method method;
   char *path;
   struct hashmap *headers;
+  char *body;
 } Request;
 
 char *get_method_name(Method method) {
@@ -76,11 +77,22 @@ Request parse_request(char *raw_request) {
 
   request.headers = headers_map;
 
+  char *raw_request_body = raw_request + pret;
+
+  char *content_length = get_header_value(headers_map, "Content-Length");
+
+  int body_length =
+      content_length != NULL ? atoi(content_length) : strlen(raw_request_body);
+
+  request.body = malloc(body_length + 1);
+  strcpy(request.body, raw_request_body);
+
   return request;
 }
 
 void free_request(Request *request) {
   free(request->path);
+  free(request->body);
   hashmap_free(request->headers);
 }
 #endif
