@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15.4
+    volumes:
+      - development_data:/var/lib/postgresql/data
+      - ./sql:/scripts
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=grima_development
+
+volumes:
+  development_data:

@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <libpq-fe.h>
 #include <log.h>
 
 #include "app.h"
+#include "database.c"
 
 AppContext app_ctx;
 
@@ -39,6 +41,10 @@ void handle_request(ServerContext *server_ctx, Request request,
 }
 
 void start_app(int port) {
+  log_info("Connecting to database...");
+
+  app_ctx.database_connection = connect_database();
+
   log_info("Starting server...");
 
   app_ctx.server_context = start_server(port);
@@ -50,4 +56,7 @@ void start_app(int port) {
   }
 }
 
-void shutdown_app(AppContext ctx) { shutdown_server(ctx.server_context); };
+void shutdown_app(AppContext ctx) {
+  shutdown_server(ctx.server_context);
+  shutdown_database(ctx.database_connection);
+};
