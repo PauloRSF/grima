@@ -12,29 +12,33 @@
 #include "response.c"
 #include "server.c"
 
-struct server_context ctx;
-
-int client_socket_descriptor;
+ServerContext ctx;
 
 void shutdown_handler() {
   printf("\nShutting down...\n");
 
-  close(client_socket_descriptor);
-
   shutdown_server(ctx);
 
-  exit(130);
+  exit(SIGINT);
 }
 
-void handle_request(Request request) {
+void handle_healthz_endpoint(ServerContext ctx, Request request,
+                             Headers headers) {
+  if (request.method != GET)
+    return send_response(ctx, 405, headers, NULL);
+
+  add_header(headers, "Content-Type", "application/json");
+
+  return send_response(ctx, 200, headers, "{\"msg\": \"healthy\"}");
+}
+
+void handle_request(ServerContext ctx, Request request) {
   Headers headers = create_headers();
 
   add_header(headers, "Connection", "close");
 
   if (strcmp(request.path, "/healthz") == 0) {
-    add_header(headers, "Content-Type", "application/json");
-
-    send_response(ctx, 200, headers, "{\"msg\": \"healthy\"}");
+    handle_healthz_endpoint(ctx, request, headers);
   } else {
     add_header(headers, "Content-Length", "0");
 
@@ -59,7 +63,7 @@ int main(int argc, char **argv) {
 
     printf("%s %s\n", get_method_name(request.method), request.path);
 
-    handle_request(request);
+    handle_request(ctx, request);
 
     free_request(&request);
   }

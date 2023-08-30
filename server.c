@@ -12,11 +12,11 @@
 #define CLIENT_RECEIVE_BUFFER_SIZE 1024
 #define PORT 3000
 
-struct server_context {
+typedef struct server_context {
   int server_descriptor;
   struct sockaddr_in address;
   int client_socket_descriptor;
-};
+} ServerContext;
 
 struct server_context start_server(int port) {
   int server_descriptor;
@@ -55,6 +55,7 @@ struct server_context start_server(int port) {
 };
 
 void shutdown_server(struct server_context ctx) {
+  close(ctx.client_socket_descriptor);
   shutdown(ctx.server_descriptor, SHUT_RDWR);
 };
 
