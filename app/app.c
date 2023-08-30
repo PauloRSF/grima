@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <log.h>
 #include "../http/server.c"
-#include "../lib/log.h"
 
 typedef struct app_context {
   ServerContext server_context;

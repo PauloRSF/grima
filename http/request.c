@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../lib/picohttpparser.h"
+#include <picohttpparser.h>
+
 #include "headers.c"
 
 typedef enum method {

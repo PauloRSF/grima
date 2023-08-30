@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../lib/hashmap.h"
+#include <hashmap.h>
 
 #define HTTP_VERSION "HTTP/1.1"
 

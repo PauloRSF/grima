@@ -7,16 +7,17 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <log.h>
+
 #include "app/app.c"
-#include "lib/log.h"
 
 AppContext ctx;
 
 void shutdown_handler(int signal) {
   if (signal == SIGSEGV) {
-    log_fatal("\nShutting down due to segfault...");
+    log_fatal("Shutting down due to segfault...");
   } else {
-    log_info("\nShutting down...");
+    log_info("Shutting down...");
   }
 
   shutdown_app(ctx);
