@@ -14,6 +14,7 @@
 #define HTTP_METHOD_NOT_ALLOWED_TEXT "Method Not Allowed"
 #define HTTP_UNSUPPORTED_MEDIA_TYPE_TEXT "Unsupported Media Type"
 #define HTTP_UNPROCESSABLE_ENTITY_TEXT "Unprocessable Entity"
+#define HTTP_INTERNAL_SERVER_ERROR_TEXT "Internal Server Error"
 
 #define HTTP_METHOD_LENGTH 3
 #define CRLF_LENGTH 2
@@ -52,6 +53,9 @@ char *get_status_line(unsigned short status_code) {
     break;
   case 422:
     status_text = HTTP_UNPROCESSABLE_ENTITY_TEXT;
+    break;
+  case 500:
+    status_text = HTTP_INTERNAL_SERVER_ERROR_TEXT;
     break;
   }
 
