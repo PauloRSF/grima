@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "../http/server.c"
+#include "../lib/log.h"
 
 typedef struct app_context {
   ServerContext server_context;
@@ -59,7 +60,7 @@ void handle_pessoas_endpoint(ServerContext *ctx, Request request,
 }
 
 void handle_request(ServerContext *ctx, Request request, Response response) {
-  printf("%s %s\n", get_method_name(request.method), request.path);
+  log_info("%s %s", get_method_name(request.method), request.path);
 
   add_header(response.headers, "Connection", "close");
 
@@ -75,11 +76,11 @@ void handle_request(ServerContext *ctx, Request request, Response response) {
 }
 
 void start_app(int port) {
-  printf("Starting server...\n");
+  log_info("Starting server...");
 
   ctx.server_context = start_server(port);
 
-  printf("Listening in port %d\n", port);
+  log_info("Listening in port %d", port);
 
   while (true) {
     accept_connection(&ctx.server_context, handle_request);
