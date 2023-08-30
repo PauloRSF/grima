@@ -70,16 +70,6 @@ Person *person_repository_get_by_id(PGconn *database_connection, uuid_t id) {
       PQexecParams(database_connection, "SELECT * FROM persons WHERE id = $1",
                    1, NULL, paramValues, paramLengths, paramFormats, 0);
 
-  // sigset_t set;
-
-  // sigemptyset(&set);
-  // sigpending(&set);
-
-  // if (sigismember(&set, SIGPIPE)) {
-  //   printf("SIGPIPE\n");
-  //   return NULL;
-  // }
-
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
     fprintf(stderr, "SELECT failed: %s", PQerrorMessage(database_connection));
     PQclear(res);
@@ -101,9 +91,7 @@ Person *person_repository_get_by_id(PGconn *database_connection, uuid_t id) {
 
   Date date_of_birth = date_from_string(date_of_birth_field);
 
-  // char **stack = get_person_stack(database_connection, id);
-
-  char **stack = NULL;
+  char **stack = get_person_stack(database_connection, id);
 
   uuid_t person_id = {'\0'};
   uuid_parse(id_field, person_id);
