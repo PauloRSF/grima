@@ -7,6 +7,7 @@
 
 #include "app.h"
 #include "database.h"
+#include "modules/persons/interface/http/persons_count_handler.c"
 #include "modules/persons/interface/http/persons_handler.c"
 
 AppContext app_ctx;
@@ -35,6 +36,9 @@ void handle_request(ServerContext *server_ctx, Request request,
 
   if (strncmp(request.path, "/pessoas", strlen("/pessoas")) == 0)
     return persons_handler(&app_ctx, request, response);
+
+  if (strcmp(request.path, "/contagem-pessoas") == 0)
+    return persons_count_handler(&app_ctx, request, response);
 
   response.status_code = 404;
 
