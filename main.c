@@ -11,6 +11,8 @@
 
 #include "app/app.c"
 
+#define DEFAULT_PORT 3000
+
 AppContext ctx;
 
 void shutdown_handler(int signal) {
@@ -31,7 +33,11 @@ int main(int argc, char **argv) {
   signal(SIGINT, shutdown_handler);
   signal(SIGSEGV, shutdown_handler);
 
-  start_app(atoi(argv[1]));
+  int port_argument = argc > 1 ? atoi(argv[1]) : 0;
+
+  int port = port_argument != 0 ? port_argument : DEFAULT_PORT;
+
+  start_app(port);
 
   return 0;
 }
