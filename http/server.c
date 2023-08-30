@@ -114,6 +114,8 @@ void accept_connection(ServerContext *ctx,
 
   free_request(&request);
   free_response(&response);
+
+  close(ctx->client_socket_descriptor);
 };
 
 #endif
