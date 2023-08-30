@@ -6,7 +6,7 @@
 #include <log.h>
 
 #include "app.h"
-#include "database.c"
+#include "database.h"
 
 AppContext app_ctx;
 
@@ -40,14 +40,16 @@ void handle_request(ServerContext *server_ctx, Request request,
   send_response(server_ctx, response);
 }
 
-void start_app(int port) {
+void start_app(int port, AppContext *ctx) {
   log_info("Connecting to database...");
 
-  app_ctx.database_connection = connect_database();
+  app_ctx.database_connection = connect_database(getenv("DATABASE_URI"));
 
   log_info("Starting server...");
 
   app_ctx.server_context = start_server(port);
+
+  ctx = &app_ctx;
 
   log_info("Listening in port %d", port);
 

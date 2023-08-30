@@ -9,7 +9,7 @@
 
 #include <log.h>
 
-#include "app/app.c"
+#include "app/app.h"
 
 #define DEFAULT_PORT 3000
 
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 
   int port = port_argument != 0 ? port_argument : DEFAULT_PORT;
 
-  start_app(port);
+  start_app(port, &ctx);
 
   return 0;
 }

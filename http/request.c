@@ -1,25 +1,11 @@
-#ifndef GRIMA_REQUEST_H
-#define GRIMA_REQUEST_H
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <picohttpparser.h>
 
-#include "headers.c"
-
-typedef enum method {
-  GET = 0,
-  POST = 1,
-} Method;
-
-typedef struct request {
-  Method method;
-  char *path;
-  struct hashmap *headers;
-  char *body;
-} Request;
+#include "headers.h"
+#include "request.h"
 
 char *get_method_name(Method method) {
   char *methods[] = {"GET", "POST"};
@@ -37,8 +23,8 @@ Method get_method_by_name(char *method_name) {
 
 Request parse_request(char *raw_request) {
   struct phr_header headers[100];
-  const char *method, *path;
-  size_t buffer_length, path_length, method_length, num_headers;
+  const char *method = NULL, *path = NULL;
+  size_t buffer_length = 0, path_length = 0, method_length = 0, num_headers = 0;
   int minor_version;
 
   int pret = phr_parse_request(raw_request, strlen(raw_request), &method,
@@ -95,4 +81,3 @@ void free_request(Request *request) {
   free(request->body);
   hashmap_free(request->headers);
 }
-#endif

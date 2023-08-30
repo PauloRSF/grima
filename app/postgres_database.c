@@ -3,8 +3,10 @@
 #include <libpq-fe.h>
 #include <log.h>
 
-PGconn *connect_database() {
-  PGconn *connection = PQconnectdb(getenv("DATABASE_URI"));
+#include "database.h"
+
+DatabaseContext *connect_database(char *connection_uri) {
+  PGconn *connection = PQconnectdb(connection_uri);
 
   if (PQstatus(connection) != CONNECTION_OK) {
     log_error("Could not connect to database: %s", PQerrorMessage(connection));
@@ -15,4 +17,4 @@ PGconn *connect_database() {
   return connection;
 }
 
-void shutdown_database(PGconn *connection) { PQfinish(connection); }
+void shutdown_database(DatabaseContext *ctx) { PQfinish(ctx); }

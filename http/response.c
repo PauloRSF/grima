@@ -1,11 +1,9 @@
-#ifndef GRIMA_RESPONSE_H
-#define GRIMA_RESPONSE_H
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "headers.c"
+#include "headers.h"
+#include "response.h"
 
 #define HTTP_VERSION "HTTP/1.1"
 
@@ -19,12 +17,6 @@
 
 #define HTTP_METHOD_LENGTH 3
 #define CRLF_LENGTH 2
-
-typedef struct response {
-  unsigned short status_code;
-  struct hashmap *headers;
-  char *body;
-} Response;
 
 Response create_response() {
   Response response;
@@ -68,8 +60,6 @@ char *get_status_line(unsigned short status_code) {
                             HTTP_METHOD_LENGTH + CRLF_LENGTH + 4);
 
   sprintf(status_line, "%s %d %s\r\n", HTTP_VERSION, status_code, status_text);
-
-  free(status_text);
 
   return status_line;
 }
@@ -121,4 +111,3 @@ void free_response(Response *response) {
   free(response->body);
   hashmap_free(response->headers);
 }
-#endif

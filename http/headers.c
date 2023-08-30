@@ -1,21 +1,10 @@
-#ifndef GRIMA_HEADERS_H
-#define GRIMA_HEADERS_H
-
-#include <alloca.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <hashmap.h>
 
-#define HTTP_VERSION "HTTP/1.1"
-
-typedef struct header {
-  char *key;
-  char *value;
-} Header;
-
-typedef struct hashmap *Headers;
+#include "headers.h"
 
 int header_compare(const void *a, const void *b, void *udata) {
   const struct header *ua = a;
@@ -86,4 +75,3 @@ void free_header(Header *header) {
 }
 
 void free_headers(Headers headers) { hashmap_free(headers); }
-#endif

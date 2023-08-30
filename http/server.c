@@ -1,5 +1,3 @@
-#ifndef GRIMA_SERVER_H
-#define GRIMA_SERVER_H
 #include <errno.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -7,17 +5,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "headers.c"
-#include "request.c"
-#include "response.c"
-
-#define CLIENT_RECEIVE_BUFFER_SIZE 1024
-
-typedef struct server_context {
-  int server_descriptor;
-  struct sockaddr_in address;
-  int client_socket_descriptor;
-} ServerContext;
+#include "headers.h"
+#include "request.h"
+#include "response.h"
+#include "server.h"
 
 ServerContext start_server(int port) {
   int server_descriptor;
@@ -117,5 +108,3 @@ void accept_connection(ServerContext *ctx,
 
   close(ctx->client_socket_descriptor);
 };
-
-#endif
