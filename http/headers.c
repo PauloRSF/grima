@@ -59,8 +59,13 @@ Headers create_headers() {
                      NULL);
 }
 
-Header *get_header(Headers headers, char *key) {
-  return (Header *)hashmap_get(headers, &(Header){.key = key});
+char *get_header_value(Headers headers, char *key) {
+  Header *header = (Header *)hashmap_get(headers, &(Header){.key = key});
+
+  if (header == NULL)
+    return NULL;
+
+  return header->value;
 }
 
 void add_header(Headers headers, char *key, char *value) {
