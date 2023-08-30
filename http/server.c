@@ -1,3 +1,5 @@
+#ifndef GRIMA_SERVER_H
+#define GRIMA_SERVER_H
 #include <errno.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -10,7 +12,6 @@
 #include "response.c"
 
 #define CLIENT_RECEIVE_BUFFER_SIZE 1024
-#define PORT 3000
 
 typedef struct server_context {
   int server_descriptor;
@@ -18,7 +19,7 @@ typedef struct server_context {
   int client_socket_descriptor;
 } ServerContext;
 
-struct server_context start_server(int port) {
+ServerContext start_server(int port) {
   int server_descriptor;
 
   struct sockaddr_in address = {.sin_family = AF_INET,
@@ -49,17 +50,17 @@ struct server_context start_server(int port) {
     exit(errno);
   }
 
-  struct server_context ctx = {.server_descriptor = server_descriptor};
+  ServerContext ctx = {.server_descriptor = server_descriptor};
 
   return ctx;
 };
 
-void shutdown_server(struct server_context ctx) {
+void shutdown_server(ServerContext ctx) {
   close(ctx.client_socket_descriptor);
   shutdown(ctx.server_descriptor, SHUT_RDWR);
 };
 
-Request receive_request(struct server_context *ctx) {
+Request receive_request(ServerContext *ctx) {
   socklen_t address_size = sizeof(ctx->address);
 
   int client_socket_descriptor = accept(
@@ -87,17 +88,32 @@ Request receive_request(struct server_context *ctx) {
   return request;
 };
 
-void send_response(struct server_context ctx, unsigned short status_code,
-                   Headers headers, char *body) {
-  char *response = build_http_response_payload(status_code, headers, body);
+void send_response(ServerContext *ctx, Response response) {
+  char *response_payload = build_http_response_payload(response);
 
-  int write_result =
-      write(ctx.client_socket_descriptor, response, strlen(response));
+  int write_result = write(ctx->client_socket_descriptor, response_payload,
+                           strlen(response_payload));
 
   if (write_result == -1) {
     perror("Could not write to client socket");
     exit(errno);
   }
 
-  free(response);
+  free(response_payload);
 };
+
+void accept_connection(ServerContext *ctx,
+                       void (*handle_request)(ServerContext *ctx,
+                                              Request request,
+                                              Response response)) {
+  Request request = receive_request(ctx);
+
+  Response response = create_response();
+
+  handle_request(ctx, request, response);
+
+  free_request(&request);
+  free_response(&response);
+};
+
+#endif

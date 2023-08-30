@@ -59,6 +59,10 @@ Headers create_headers() {
                      NULL);
 }
 
+Header *get_header(Headers headers, char *key) {
+  return (Header *)hashmap_get(headers, &(Header){.key = key});
+}
+
 void add_header(Headers headers, char *key, char *value) {
   Header header;
 
@@ -69,6 +73,11 @@ void add_header(Headers headers, char *key, char *value) {
   strcpy(header.value, value);
 
   hashmap_set(headers, &header);
+}
+
+void free_header(Header *header) {
+  free(header->key);
+  free(header->value);
 }
 
 void free_headers(Headers headers) { hashmap_free(headers); }
