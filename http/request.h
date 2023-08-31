@@ -19,7 +19,7 @@ char *get_method_name(Method method);
 
 Method get_method_by_name(char *method_name);
 
-Request parse_request(char *raw_request);
+Request *parse_request(char *raw_request, size_t raw_request_length);
 
 void free_request(Request *request);
 #endif

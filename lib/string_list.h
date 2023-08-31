@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 typedef struct string_list_node {
-  const char *data;
+  char *data;
   struct string_list_node *next;
 } StringListNode;
 
@@ -13,9 +13,10 @@ typedef struct string_list {
 } StringList;
 
 StringList *StringList_new();
-void StringList_add(StringList *list, const char *data);
+void StringList_add(StringList *list, char *data);
 StringList *StringList_clone(StringList *list);
 bool StringList_is_empty(StringList *list);
+void StringList_free(StringList *list);
 
 #define StringList_ForEach(element, list)                                      \
   for (element = (list != NULL) ? (list)->items : NULL; element != NULL;       \

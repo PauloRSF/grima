@@ -19,24 +19,6 @@ ValidationError *create_validation_error(char *message, StringList *details) {
     error->message = "There were validation errors";
   }
 
-  // if (details == NULL)
-  //   return error;
-
-  // size_t details_count = 0;
-  // while (details[details_count++])
-  //   ;
-
-  // error->details = calloc(sizeof(char *), details_count);
-
-  // size_t i = 0;
-  // for (int j = 0; j < details_count; j++) {
-  //   if (details[j]) {
-  //     error->details[i] = malloc(strlen(details[j]) + 1);
-  //     strcpy(error->details[i], details[j]);
-  //     ++i;
-  //   }
-  // }
-
   return error;
 }
 
@@ -44,7 +26,8 @@ void free_error(Error *error) {
   if (error->kind == ValidationErrorKind) {
     ValidationError *validation_error = (ValidationError *)&error;
 
-    free(validation_error->message);
-    free(validation_error->details);
+    // free(validation_error->message);
+    StringList_free(validation_error->details);
   }
+  free(error);
 }

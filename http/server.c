@@ -10,12 +10,12 @@
 #include "response.h"
 #include "server.h"
 
-void shutdown_server(ServerContext ctx) {
-  close(ctx.client_socket_descriptor);
-  shutdown(ctx.server_descriptor, SHUT_RDWR);
+void shutdown_server(ServerContext *ctx) {
+  close(ctx->client_socket_descriptor);
+  shutdown(ctx->server_descriptor, SHUT_RDWR);
 };
 
-Request receive_request(ServerContext *ctx) {
+Request *receive_request(ServerContext *ctx) {
   socklen_t address_size = sizeof(ctx->address);
 
   int client_socket_descriptor = accept(
@@ -27,23 +27,51 @@ Request receive_request(ServerContext *ctx) {
   }
 
   ctx->client_socket_descriptor = client_socket_descriptor;
+  char *raw_request = NULL;
 
   char client_receive_buffer[CLIENT_RECEIVE_BUFFER_SIZE] = {0};
 
-  int read_result = read(client_socket_descriptor, &client_receive_buffer,
-                         CLIENT_RECEIVE_BUFFER_SIZE);
+  int bytes_read = -1;
+  size_t raw_request_length = 0;
 
-  if (read_result == -1) {
-    perror("Could not read from client socket");
-    exit(errno);
+  while (true) {
+    memset(client_receive_buffer, '\0', CLIENT_RECEIVE_BUFFER_SIZE);
+
+    bytes_read = read(client_socket_descriptor, &client_receive_buffer,
+                      CLIENT_RECEIVE_BUFFER_SIZE);
+
+    if (bytes_read == -1) {
+      perror("Could not read from client socket");
+      exit(errno);
+    }
+
+    raw_request_length += bytes_read;
+
+    if (bytes_read != 0) {
+      if (raw_request == NULL) {
+        raw_request = calloc(1, raw_request_length + 1);
+        strncpy(raw_request, client_receive_buffer, bytes_read);
+      } else {
+        raw_request = realloc(raw_request, raw_request_length + 1);
+        strncat(raw_request, client_receive_buffer, bytes_read);
+      }
+    }
+
+    if (bytes_read == 0 || bytes_read < CLIENT_RECEIVE_BUFFER_SIZE)
+      break;
   }
 
-  Request request = parse_request(client_receive_buffer);
+  if (raw_request == NULL)
+    return NULL;
+
+  Request *request = parse_request(raw_request, raw_request_length);
+
+  free(raw_request);
 
   return request;
 };
 
-void send_response(ServerContext *ctx, Response response) {
+void send_response(ServerContext *ctx, Response *response) {
   char *response_payload = build_http_response_payload(response);
 
   int write_result = write(ctx->client_socket_descriptor, response_payload,
@@ -57,18 +85,17 @@ void send_response(ServerContext *ctx, Response response) {
   free(response_payload);
 };
 
-void accept_connection(ServerContext *ctx,
-                       void (*handle_request)(ServerContext *ctx,
-                                              Request request,
-                                              Response response)) {
-  Request request = receive_request(ctx);
+void accept_connection(ServerContext *ctx, RequestHandler handle_request) {
+  Request *request = receive_request(ctx);
 
-  Response response = create_response();
+  if (request != NULL) {
+    Response *response = create_response();
 
-  handle_request(ctx, request, response);
+    handle_request(ctx, request, response);
 
-  free_request(&request);
-  free_response(&response);
+    free_request(request);
+    free_response(response);
+  }
 
   close(ctx->client_socket_descriptor);
 };
@@ -109,9 +136,7 @@ ServerContext init_server(int port) {
   return ctx;
 };
 
-void start_server(ServerContext *ctx,
-                  void (*handle_request)(ServerContext *ctx, Request request,
-                                         Response response)) {
+void start_server(ServerContext *ctx, RequestHandler handle_request) {
   while (true) {
     accept_connection(ctx, handle_request);
   }

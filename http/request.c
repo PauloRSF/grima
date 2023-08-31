@@ -21,23 +21,27 @@ Method get_method_by_name(char *method_name) {
   return GET;
 }
 
-Request parse_request(char *raw_request) {
-  struct phr_header headers[100];
+Request *parse_request(char *raw_request, size_t raw_request_length) {
+  struct phr_header parsed_headers[100];
   const char *method = NULL, *path = NULL;
-  size_t buffer_length, path_length, method_length, num_headers;
+  size_t buffer_length, path_length, method_length,
+      num_headers = sizeof(parsed_headers) / sizeof(parsed_headers[0]);
   int minor_version;
 
-  int pret = phr_parse_request(raw_request, strlen(raw_request), &method,
+  int pret = phr_parse_request(raw_request, raw_request_length, &method,
                                &method_length, &path, &path_length,
-                               &minor_version, headers, &num_headers, 0);
+                               &minor_version, parsed_headers, &num_headers, 0);
 
-  Request request;
+  // if (pret == -1)
+  //   return NULL;
+
+  Request *request = calloc(1, sizeof(Request));
 
   char method_str[method_length + 1];
   memset(method_str, '\0', method_length + 1);
   strncpy(method_str, method, method_length);
 
-  request.method = get_method_by_name(method_str);
+  request->method = get_method_by_name(method_str);
 
   char path_str[path_length + 1];
   memset(path_str, '\0', path_length + 1);
@@ -55,13 +59,13 @@ Request parse_request(char *raw_request) {
     memset(header_key, '\0', 128);
     memset(header_value, '\0', 128);
 
-    strncpy(header_key, headers[i].name, headers[i].name_len);
-    strncpy(header_value, headers[i].value, headers[i].value_len);
+    strncpy(header_key, parsed_headers[i].name, parsed_headers[i].name_len);
+    strncpy(header_value, parsed_headers[i].value, parsed_headers[i].value_len);
 
     add_header(headers_map, header_key, header_value);
   }
 
-  request.headers = headers_map;
+  request->headers = headers_map;
 
   char *raw_request_body = raw_request + pret;
 
@@ -70,8 +74,10 @@ Request parse_request(char *raw_request) {
   int body_length =
       content_length != NULL ? atoi(content_length) : strlen(raw_request_body);
 
-  request.body = malloc(body_length + 1);
-  strcpy(request.body, raw_request_body);
+  request->body = malloc(body_length + 1);
+  strcpy(request->body, raw_request_body);
+
+  free(fake_url_to_parse);
 
   return request;
 }
@@ -79,5 +85,6 @@ Request parse_request(char *raw_request) {
 void free_request(Request *request) {
   free(request->path);
   free(request->body);
-  hashmap_free(request->headers);
+  free_headers(request->headers);
+  free(request);
 }

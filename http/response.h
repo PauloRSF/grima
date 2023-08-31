@@ -23,11 +23,11 @@ typedef struct response {
   char *body;
 } Response;
 
-Response create_response();
+Response *create_response();
 
 char *get_status_line(unsigned short status_code);
 
-char *build_http_response_payload(Response response);
+char *build_http_response_payload(Response *response);
 
 void free_response(Response *response);
 #endif

@@ -19,12 +19,12 @@
 #define HTTP_METHOD_LENGTH 3
 #define CRLF_LENGTH 2
 
-Response create_response() {
-  Response response;
+Response *create_response() {
+  Response *response = calloc(1, sizeof(Response));
 
-  response.status_code = 200;
-  response.headers = create_headers();
-  response.body = NULL;
+  response->status_code = 200;
+  response->headers = create_headers();
+  response->body = NULL;
 
   return response;
 }
@@ -68,38 +68,38 @@ char *get_status_line(unsigned short status_code) {
   return status_line;
 }
 
-char *build_http_response_payload(Response response) {
+char *build_http_response_payload(Response *response) {
   char *response_payload;
 
-  if (response.body != NULL) {
+  if (response->body != NULL) {
     char body_length_str[32];
-    sprintf(body_length_str, "%lu", strlen(response.body) + 4);
-    add_header(response.headers, "Content-Length", body_length_str);
+    sprintf(body_length_str, "%lu", strlen(response->body) + 4);
+    add_header(response->headers, "Content-Length", body_length_str);
   } else {
-    add_header(response.headers, "Content-Length", "0");
+    add_header(response->headers, "Content-Length", "0");
   }
 
-  char *status_line = get_status_line(response.status_code);
-  char *headers_payload = get_headers_payload(response.headers);
+  char *status_line = get_status_line(response->status_code);
+  char *headers_payload = get_headers_payload(response->headers);
 
   size_t response_payload_length = strlen(status_line) + 2;
 
-  if (response.headers != NULL)
+  if (response->headers != NULL)
     response_payload_length += strlen(headers_payload);
 
-  if (response.body != NULL)
-    response_payload_length += strlen(response.body + CRLF_LENGTH * 2);
+  if (response->body != NULL)
+    response_payload_length += strlen(response->body + CRLF_LENGTH * 2);
 
   response_payload = (char *)calloc(1, response_payload_length + 10);
 
   strcpy(response_payload, status_line);
 
-  if (response.headers != NULL)
+  if (response->headers != NULL)
     strcat(response_payload, headers_payload);
 
-  if (response.body != NULL) {
+  if (response->body != NULL) {
     strcat(response_payload, "\r\n");
-    strcat(response_payload, response.body);
+    strcat(response_payload, response->body);
     strcat(response_payload, "\r\n");
   }
 
@@ -113,5 +113,6 @@ char *build_http_response_payload(Response response) {
 
 void free_response(Response *response) {
   free(response->body);
-  hashmap_free(response->headers);
+  free_headers(response->headers);
+  free(response);
 }

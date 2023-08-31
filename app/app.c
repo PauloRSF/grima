@@ -12,35 +12,35 @@
 
 AppContext app_ctx;
 
-void handle_ping_endpoint(ServerContext *server_ctx, Request request,
-                          Response response) {
-  if (request.method != GET) {
-    response.status_code = 405;
+void handle_ping_endpoint(ServerContext *server_ctx, Request *request,
+                          Response *response) {
+  if (request->method != GET) {
+    response->status_code = 405;
     return send_response(server_ctx, response);
   }
 
-  response.status_code = 200;
-  response.body = "pong";
+  response->status_code = 200;
+  response->body = "pong";
 
   send_response(server_ctx, response);
 }
 
-void handle_request(ServerContext *server_ctx, Request request,
-                    Response response) {
-  log_info("%s %s", get_method_name(request.method), request.path);
+void handle_request(ServerContext *server_ctx, Request *request,
+                    Response *response) {
+  log_info("%s %s", get_method_name(request->method), request->path);
 
-  add_header(response.headers, "Connection", "close");
+  add_header(response->headers, "Connection", "close");
 
-  if (strcmp(request.path, "/ping") == 0)
+  if (strcmp(request->path, "/ping") == 0)
     return handle_ping_endpoint(server_ctx, request, response);
 
-  if (strncmp(request.path, "/pessoas", strlen("/pessoas")) == 0)
+  if (strncmp(request->path, "/pessoas", strlen("/pessoas")) == 0)
     return persons_handler(&app_ctx, request, response);
 
-  if (strcmp(request.path, "/contagem-pessoas") == 0)
+  if (strcmp(request->path, "/contagem-pessoas") == 0)
     return persons_count_handler(&app_ctx, request, response);
 
-  response.status_code = 404;
+  response->status_code = 404;
 
   send_response(server_ctx, response);
 }
@@ -62,6 +62,6 @@ void start_app(int port, AppContext *ctx) {
 }
 
 void shutdown_app(AppContext ctx) {
-  shutdown_server(ctx.server_context);
+  shutdown_server(&ctx.server_context);
   shutdown_database(ctx.database_context);
 };

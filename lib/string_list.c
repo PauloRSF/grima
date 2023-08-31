@@ -12,7 +12,10 @@ StringList *StringList_new() {
   return list;
 }
 
-void StringList_add(StringList *list, const char *item) {
+void StringList_add(StringList *list, char *item) {
+  if (list == NULL || item == NULL)
+    return;
+
   StringListNode *new_node = calloc(sizeof(StringListNode), 1);
   new_node->data = item;
   new_node->next = NULL;
@@ -27,8 +30,6 @@ void StringList_add(StringList *list, const char *item) {
     }
 
     node->next = new_node;
-    node->data = malloc(strlen(item) + 1);
-    strcpy((char *)node->data, item);
   }
 };
 
@@ -53,8 +54,9 @@ StringList *StringList_clone(StringList *list) {
        node = node->next) {
     StringListNode *new_node = calloc(sizeof(StringListNode), 1);
 
-    new_node->data = node->data;
     new_node->next = NULL;
+    new_node->data = malloc(strlen(node->data) + 1);
+    strcpy((char *)new_node->data, node->data);
 
     previous_node->next = new_node;
 
@@ -66,4 +68,25 @@ StringList *StringList_clone(StringList *list) {
 
 bool StringList_is_empty(StringList *list) {
   return list == NULL || list->items == NULL;
+}
+
+void StringList_free(StringList *list) {
+  if (list == NULL)
+    return;
+
+  if (list->items != NULL) {
+    StringListNode *node = list->items;
+    StringListNode *next;
+
+    while (node != NULL) {
+      next = node->next;
+
+      free((char *)node->data);
+      free(node);
+
+      node = next;
+    }
+  }
+
+  free(list);
 }
