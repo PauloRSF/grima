@@ -1,5 +1,3 @@
-// #include <bits/types/sigset_t.h>
-// #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -219,9 +217,11 @@ size_t person_repository_count(PGconn *database_connection) {
 
   char *count_field = PQgetvalue(res, 0, PQfnumber(res, "persons_count"));
 
+  size_t count = atoi(count_field);
+
   PQclear(res);
 
-  return atoi(count_field);
+  return count;
 }
 
 StringList *insert_person_stack(PGconn *database_connection, uuid_t person_id,

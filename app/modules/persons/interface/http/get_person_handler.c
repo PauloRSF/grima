@@ -25,7 +25,7 @@ void get_person_handler(AppContext *app_ctx, Request *request,
 
   response->body = person_to_json(person);
 
-  free(person);
+  free_person(person);
 
   add_header(response->headers, "Content-Type", "application/json");
 

@@ -88,7 +88,7 @@ char *build_http_response_payload(Response *response) {
     response_payload_length += strlen(headers_payload);
 
   if (response->body != NULL)
-    response_payload_length += strlen(response->body + CRLF_LENGTH * 2);
+    response_payload_length += strlen(response->body) + CRLF_LENGTH * 2;
 
   response_payload = (char *)calloc(1, response_payload_length + 10);
 
