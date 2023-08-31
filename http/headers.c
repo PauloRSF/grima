@@ -3,19 +3,9 @@
 #include <string.h>
 
 #include <hashmap.h>
+#include <string_map.h>
 
 #include "headers.h"
-
-int header_compare(const void *a, const void *b, void *udata) {
-  const struct header *ua = a;
-  const struct header *ub = b;
-  return strcmp(ua->key, ub->key);
-}
-
-uint64_t header_hash(const void *item, uint64_t seed0, uint64_t seed1) {
-  const struct header *header = item;
-  return hashmap_sip(header->key, strlen(header->key), seed0, seed1);
-}
 
 char *get_headers_payload(Headers headers) {
   size_t index = 0;
@@ -43,35 +33,14 @@ char *get_headers_payload(Headers headers) {
   return headers_payload;
 }
 
-Headers create_headers() {
-  return hashmap_new(sizeof(Header), 1, 0, 0, header_hash, header_compare, NULL,
-                     NULL);
-}
+Headers create_headers() { return StringMap_new(); }
 
 char *get_header_value(Headers headers, char *key) {
-  Header *header = (Header *)hashmap_get(headers, &(Header){.key = key});
-
-  if (header == NULL)
-    return NULL;
-
-  return header->value;
+  return StringMap_get(headers, key);
 }
 
 void add_header(Headers headers, char *key, char *value) {
-  Header header;
-
-  header.key = calloc(1, strlen(key) + 1);
-  strcpy(header.key, key);
-
-  header.value = calloc(1, strlen(value) + 1);
-  strcpy(header.value, value);
-
-  hashmap_set(headers, &header);
+  return StringMap_set(headers, key, value);
 }
 
-void free_header(Header *header) {
-  free(header->key);
-  free(header->value);
-}
-
-void free_headers(Headers headers) { hashmap_free(headers); }
+void free_headers(Headers headers) { StringMap_free(headers); }
