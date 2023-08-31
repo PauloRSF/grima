@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <libpq-fe.h>
+#include <log.h>
 #include <string_list.h>
 #include <uuid/uuid.h>
 
@@ -11,6 +12,7 @@
 #include "../domain/person.h"
 
 StringList *get_person_stack(PGconn *database_connection, uuid_t id) {
+  const char *query = "SELECT * FROM person_techs WHERE person_id = $1";
 
   const char *paramValues[1];
   int paramLengths[1];
@@ -22,9 +24,10 @@ StringList *get_person_stack(PGconn *database_connection, uuid_t id) {
   paramLengths[0] = strlen(id_str);
   paramFormats[0] = 0;
 
-  PGresult *res = PQexecParams(
-      database_connection, "SELECT * FROM person_techs WHERE person_id = $1", 1,
-      NULL, paramValues, paramLengths, paramFormats, 0);
+  log_debug("%s %s", DATABASE_LOG_TAG, query);
+
+  PGresult *res = PQexecParams(database_connection, query, 1, NULL, paramValues,
+                               paramLengths, paramFormats, 0);
 
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
     fprintf(stderr, "SELECT failed: %s", PQerrorMessage(database_connection));
@@ -56,6 +59,8 @@ StringList *get_person_stack(PGconn *database_connection, uuid_t id) {
 }
 
 Person *person_repository_get_by_id(PGconn *database_connection, uuid_t id) {
+  const char *query = "SELECT * FROM persons WHERE id = $1";
+
   const char *paramValues[1];
   int paramLengths[1];
   int paramFormats[1];
@@ -65,6 +70,8 @@ Person *person_repository_get_by_id(PGconn *database_connection, uuid_t id) {
   paramValues[0] = id_str;
   paramLengths[0] = strlen(id_str);
   paramFormats[0] = 0;
+
+  log_debug("%s %s", DATABASE_LOG_TAG, query);
 
   PGresult *res =
       PQexecParams(database_connection, "SELECT * FROM persons WHERE id = $1",
@@ -108,6 +115,11 @@ Person *person_repository_get_by_id(PGconn *database_connection, uuid_t id) {
 
 PersonSearchResult person_repository_search(PGconn *database_connection,
                                             char *search_term) {
+  const char *query =
+      "SELECT * FROM persons WHERE id IN (SELECT DISTINCT id FROM persons AS p "
+      "JOIN person_techs AS pt ON pt.person_id=p.id WHERE p.name LIKE $1 OR "
+      "p.nickname LIKE $1 OR pt.name LIKE $1)";
+
   char *paramValues[1];
   int paramLengths[1];
   int paramFormats[1];
@@ -117,10 +129,11 @@ PersonSearchResult person_repository_search(PGconn *database_connection,
   paramLengths[0] = strlen(search_term) + 2;
   paramFormats[0] = 0;
 
-  PGresult *res = PQexecParams(
-      database_connection,
-      "SELECT * FROM persons WHERE nickname LIKE $1 OR name LIKE $1", 1, NULL,
-      (const char **)paramValues, paramLengths, paramFormats, 0);
+  log_debug("%s %s", DATABASE_LOG_TAG, query);
+
+  PGresult *res =
+      PQexecParams(database_connection, query, 1, NULL,
+                   (const char **)paramValues, paramLengths, paramFormats, 0);
 
   free(paramValues[0]);
 
@@ -168,6 +181,8 @@ PersonSearchResult person_repository_search(PGconn *database_connection,
 
 bool person_repository_is_nickname_taken(PGconn *database_connection,
                                          char *nickname) {
+  const char *query = "SELECT * FROM persons WHERE nickname = $1";
+
   const char *paramValues[1];
   int paramLengths[1];
   int paramFormats[1];
@@ -176,9 +191,10 @@ bool person_repository_is_nickname_taken(PGconn *database_connection,
   paramLengths[0] = strlen(nickname);
   paramFormats[0] = 0;
 
-  PGresult *res = PQexecParams(
-      database_connection, "SELECT * FROM persons WHERE nickname = $1", 1, NULL,
-      paramValues, paramLengths, paramFormats, 0);
+  log_debug("%s %s", DATABASE_LOG_TAG, query);
+
+  PGresult *res = PQexecParams(database_connection, query, 1, NULL, paramValues,
+                               paramLengths, paramFormats, 0);
 
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
     fprintf(stderr, "SELECT failed: %s", PQerrorMessage(database_connection));
@@ -199,8 +215,11 @@ bool person_repository_is_nickname_taken(PGconn *database_connection,
 }
 
 size_t person_repository_count(PGconn *database_connection) {
-  PGresult *res = PQexec(database_connection,
-                         "SELECT COUNT(id) as persons_count FROM persons");
+  const char *query = "SELECT COUNT(id) as persons_count FROM persons";
+
+  log_debug("%s %s", DATABASE_LOG_TAG, query);
+
+  PGresult *res = PQexec(database_connection, query);
 
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
     fprintf(stderr, "SELECT failed: %s", PQerrorMessage(database_connection));
@@ -229,6 +248,9 @@ StringList *insert_person_stack(PGconn *database_connection, uuid_t person_id,
   if (stack == NULL)
     return NULL;
 
+  char *query = "INSERT INTO person_techs (person_id, name) "
+                "VALUES ($1, $2) RETURNING *";
+
   StringList *saved_stack = StringList_new();
   StringListNode *item = NULL;
 
@@ -247,11 +269,10 @@ StringList *insert_person_stack(PGconn *database_connection, uuid_t person_id,
     paramLengths[1] = strlen(item->data);
     paramFormats[1] = 0;
 
-    PGresult *res =
-        PQexecParams(database_connection,
-                     "INSERT INTO person_techs (person_id, name) "
-                     "VALUES ($1, $2) RETURNING *",
-                     2, NULL, paramValues, paramLengths, paramFormats, 0);
+    log_debug("%s %s", DATABASE_LOG_TAG, query);
+
+    PGresult *res = PQexecParams(database_connection, query, 2, NULL,
+                                 paramValues, paramLengths, paramFormats, 0);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
       fprintf(stderr, "INSERT failed: %s", PQerrorMessage(database_connection));
@@ -268,6 +289,9 @@ StringList *insert_person_stack(PGconn *database_connection, uuid_t person_id,
 }
 
 Person *person_repository_store(PGconn *database_connection, Person *person) {
+  const char *query = "INSERT INTO persons (id, name, nickname, date_of_birth) "
+                      "VALUES ($1, $2, $3, $4::date) RETURNING *";
+
   const char *paramValues[4];
   int paramLengths[4];
   int paramFormats[4];
@@ -292,11 +316,10 @@ Person *person_repository_store(PGconn *database_connection, Person *person) {
   paramLengths[3] = strlen(date_of_birth_string);
   paramFormats[3] = 0;
 
-  PGresult *res =
-      PQexecParams(database_connection,
-                   "INSERT INTO persons (id, name, nickname, date_of_birth) "
-                   "VALUES ($1, $2, $3, $4::date) RETURNING *",
-                   4, NULL, paramValues, paramLengths, paramFormats, 0);
+  log_debug("%s %s", DATABASE_LOG_TAG, query);
+
+  PGresult *res = PQexecParams(database_connection, query, 4, NULL, paramValues,
+                               paramLengths, paramFormats, 0);
 
   free(date_of_birth_string);
 
