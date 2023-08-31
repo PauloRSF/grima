@@ -72,7 +72,7 @@ bool validate_person_creation_data(DatabaseContext *database_context,
 
   cJSON *stack_json = cJSON_GetObjectItemCaseSensitive(person_json, "stack");
 
-  if (stack_json) {
+  if (stack_json && !cJSON_IsNull(stack_json)) {
     if (!cJSON_IsArray(stack_json)) {
       StringList_add(details, "'stack' must be an array");
     } else {
