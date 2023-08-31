@@ -108,6 +108,66 @@ Person *person_repository_get_by_id(PGconn *database_connection, uuid_t id) {
   return person;
 }
 
+PersonSearchResult person_repository_search(PGconn *database_connection,
+                                            char *search_term) {
+  char *paramValues[1];
+  int paramLengths[1];
+  int paramFormats[1];
+
+  paramValues[0] = malloc(strlen(search_term) + 3);
+  sprintf((char *)paramValues[0], "%%%s%%", search_term);
+  paramLengths[0] = strlen(search_term) + 2;
+  paramFormats[0] = 0;
+
+  PGresult *res = PQexecParams(
+      database_connection,
+      "SELECT * FROM persons WHERE nickname LIKE $1 OR name LIKE $1", 1, NULL,
+      (const char **)paramValues, paramLengths, paramFormats, 0);
+
+  free(paramValues[0]);
+
+  PersonSearchResult result = {.persons = NULL, .persons_count = 0};
+
+  if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+    fprintf(stderr, "SELECT failed: %s", PQerrorMessage(database_connection));
+    PQclear(res);
+
+    return result;
+  }
+
+  if (PQntuples(res) < 1)
+    return result;
+
+  result.persons_count = PQntuples(res);
+  result.persons = calloc(result.persons_count, sizeof(Person *));
+
+  for (int i = 0; i < result.persons_count; ++i) {
+    char *id_field = PQgetvalue(res, i, PQfnumber(res, "id"));
+    char *name_field = PQgetvalue(res, i, PQfnumber(res, "name"));
+    char *nickname_field = PQgetvalue(res, i, PQfnumber(res, "nickname"));
+    char *date_of_birth_field =
+        PQgetvalue(res, i, PQfnumber(res, "date_of_birth"));
+
+    Date date_of_birth = date_from_string(date_of_birth_field);
+
+    uuid_t person_id = {'\0'};
+    uuid_parse(id_field, person_id);
+
+    StringList *stack = get_person_stack(database_connection, person_id);
+
+    Person *person = create_person(person_id, name_field, nickname_field,
+                                   date_of_birth, stack);
+
+    StringList_free(stack);
+
+    result.persons[i] = person;
+  }
+
+  PQclear(res);
+
+  return result;
+}
+
 bool person_repository_is_nickname_taken(PGconn *database_connection,
                                          char *nickname) {
   const char *paramValues[1];

@@ -28,6 +28,10 @@ void persons_handler(AppContext *app_ctx, Request *request,
       return send_response(&app_ctx->server_context, response);
     }
 
+    if (path_segments_count == 1) {
+      return find_persons_handler(app_ctx, request, response);
+    }
+
     if (path_segments_count == 2) {
       return get_person_handler(app_ctx, request, response);
     }

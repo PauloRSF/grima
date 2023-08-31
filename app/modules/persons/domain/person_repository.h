@@ -15,4 +15,7 @@ Person *person_repository_store(DatabaseContext *database_ctx, Person *person);
 
 size_t person_repository_count(DatabaseContext *database_ctx);
 
+PersonSearchResult person_repository_search(DatabaseContext *database_ctx,
+                                            char *search_term);
+
 #endif

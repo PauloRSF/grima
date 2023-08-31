@@ -49,3 +49,14 @@ void free_person(Person *person) {
 
   free(person);
 }
+
+void free_person_search_result(PersonSearchResult *result) {
+  if (result == NULL)
+    return;
+
+  for (int i = 0; i < result->persons_count; ++i) {
+    free_person(result->persons[i]);
+  }
+
+  free(result->persons);
+}

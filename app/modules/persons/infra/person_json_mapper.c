@@ -67,6 +67,20 @@ char *person_to_json(Person *person) {
   return json_person;
 }
 
+char *persons_to_json(Person **persons, size_t persons_count) {
+  cJSON *json = cJSON_CreateArray();
+
+  for (int i = 0; i < persons_count; ++i) {
+    cJSON_AddItemToArray(json, person_to_json_object(persons[i]));
+  }
+
+  char *json_persons = cJSON_Print(json);
+
+  cJSON_Delete(json);
+
+  return json_persons;
+}
+
 size_t count_person_json_stack_items(cJSON *stack_json) {
   int i = 0;
   cJSON *item;

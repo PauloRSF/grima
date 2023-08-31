@@ -32,4 +32,7 @@ Person *person_from_json(cJSON *person_json);
 char *persons_to_json(Person **person, size_t person_count);
 
 void free_person(Person *person);
+
+void free_person_search_result(PersonSearchResult *result);
+
 #endif
