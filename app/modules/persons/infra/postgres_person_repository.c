@@ -5,13 +5,14 @@
 #include <string.h>
 
 #include <libpq-fe.h>
+#include <string_list.h>
 #include <uuid/uuid.h>
 
 #include "../../../database.h"
 #include "../../../shared_kernel/dates/date.h"
 #include "../domain/person.h"
 
-char **get_person_stack(PGconn *database_connection, uuid_t id) {
+StringList *get_person_stack(PGconn *database_connection, uuid_t id) {
 
   const char *paramValues[1];
   int paramLengths[1];
@@ -40,14 +41,15 @@ char **get_person_stack(PGconn *database_connection, uuid_t id) {
     return NULL;
   }
 
-  char **techs = calloc(sizeof(char *), PQntuples(res) + 1);
+  StringList *techs = StringList_new();
 
   for (int i = 0; i < PQntuples(res); ++i) {
     char *name_field = PQgetvalue(res, i, PQfnumber(res, "name"));
 
-    techs[i] = malloc(strlen(name_field) + 1);
+    char *name = malloc(strlen(name_field) + 1);
+    strcpy(name, name_field);
 
-    strcpy(techs[i], name_field);
+    StringList_add(techs, name);
   }
 
   PQclear(res);
@@ -91,13 +93,15 @@ Person *person_repository_get_by_id(PGconn *database_connection, uuid_t id) {
 
   Date date_of_birth = date_from_string(date_of_birth_field);
 
-  char **stack = get_person_stack(database_connection, id);
+  StringList *stack = get_person_stack(database_connection, id);
 
   uuid_t person_id = {'\0'};
   uuid_parse(id_field, person_id);
 
   Person *person = create_person(person_id, name_field, nickname_field,
                                  date_of_birth, stack);
+
+  StringList_free(stack);
 
   PQclear(res);
 
@@ -131,6 +135,8 @@ bool person_repository_is_nickname_taken(PGconn *database_connection,
     return false;
   }
 
+  PQclear(res);
+
   return true;
 }
 
@@ -158,18 +164,15 @@ size_t person_repository_count(PGconn *database_connection) {
   return atoi(count_field);
 }
 
-char **insert_person_stack(PGconn *database_connection, uuid_t person_id,
-                           char **stack) {
+StringList *insert_person_stack(PGconn *database_connection, uuid_t person_id,
+                                StringList *stack) {
   if (stack == NULL)
     return NULL;
 
-  size_t tech_count = 0;
-  while (stack[tech_count++])
-    ;
+  StringList *saved_stack = StringList_new();
+  StringListNode *item = NULL;
 
-  char **saved_stack = calloc(sizeof(char *), tech_count + 1);
-
-  for (int i = 0; stack[i] != NULL; ++i) {
+  StringList_ForEach(item, stack) {
     const char *paramValues[2];
     int paramLengths[2];
     int paramFormats[2];
@@ -180,8 +183,8 @@ char **insert_person_stack(PGconn *database_connection, uuid_t person_id,
     paramLengths[0] = strlen(id_str);
     paramFormats[0] = 0;
 
-    paramValues[1] = stack[i];
-    paramLengths[1] = strlen(stack[i]);
+    paramValues[1] = item->data;
+    paramLengths[1] = strlen(item->data);
     paramFormats[1] = 0;
 
     PGresult *res =
@@ -249,7 +252,7 @@ Person *person_repository_store(PGconn *database_connection, Person *person) {
   uuid_t person_id = {'\0'};
   uuid_parse(id_field, person_id);
 
-  char **stack =
+  StringList *stack =
       insert_person_stack(database_connection, person_id, person->stack);
 
   char *name_field = PQgetvalue(res, 0, PQfnumber(res, "name"));

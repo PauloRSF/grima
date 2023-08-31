@@ -3,29 +3,30 @@
 #include <string.h>
 
 #include <cJSON.h>
+#include <string_list.h>
 #include <uuid/uuid.h>
 
 #include "../../../shared_kernel/dates/date.h"
 #include "../domain/person.h"
 
-char *person_to_json(Person *person) {
+cJSON *person_to_json_object(Person *person) {
   cJSON *json = cJSON_CreateObject();
 
   char person_id_string[37];
   uuid_unparse_lower(person->id, person_id_string);
 
   if (cJSON_AddStringToObject(json, "id", person_id_string) == NULL) {
-    cJSON_free(json);
+    cJSON_Delete(json);
     return NULL;
   };
 
   if (cJSON_AddStringToObject(json, "nome", person->name) == NULL) {
-    cJSON_free(json);
+    cJSON_Delete(json);
     return NULL;
   };
 
   if (cJSON_AddStringToObject(json, "apelido", person->nickname) == NULL) {
-    cJSON_free(json);
+    cJSON_Delete(json);
     return NULL;
   };
 
@@ -34,7 +35,7 @@ char *person_to_json(Person *person) {
   if (cJSON_AddStringToObject(json, "nascimento", date_of_birth_string) ==
       NULL) {
     free(date_of_birth_string);
-    cJSON_free(json);
+    cJSON_Delete(json);
     return NULL;
   };
 
@@ -43,17 +44,25 @@ char *person_to_json(Person *person) {
   if (person->stack != NULL) {
     cJSON *stack = cJSON_AddArrayToObject(json, "stack");
 
-    for (int i = 0; person->stack[i] != NULL; ++i) {
-      cJSON *tech = cJSON_CreateString(person->stack[i]);
-      cJSON_AddItemToArray(stack, tech);
+    StringListNode *tech = NULL;
+
+    StringList_ForEach(tech, person->stack) {
+      cJSON *tech_json = cJSON_CreateString(tech->data);
+      cJSON_AddItemToArray(stack, tech_json);
     }
   } else {
     cJSON_AddNullToObject(json, "stack");
   }
 
+  return json;
+}
+
+char *person_to_json(Person *person) {
+  cJSON *json = person_to_json_object(person);
+
   char *json_person = cJSON_Print(json);
 
-  cJSON_free(json);
+  cJSON_Delete(json);
 
   return json_person;
 }
@@ -65,38 +74,32 @@ size_t count_person_json_stack_items(cJSON *stack_json) {
 
   cJSON_ArrayForEach(item, stack_json) { ++count; }
 
-  cJSON_free(item);
+  cJSON_Delete(item);
 
   return count;
 }
 
-char **copy_person_json_stack_items(cJSON *stack_json) {
+StringList *copy_person_json_stack_items(cJSON *stack_json) {
   if (stack_json == NULL || !cJSON_IsArray(stack_json))
     return NULL;
 
-  size_t i = 0;
   cJSON *stack_item;
-  size_t stack_items_count = count_person_json_stack_items(stack_json);
-  char **stack = calloc(sizeof(char *), stack_items_count);
+  StringList *stack = StringList_new();
 
   cJSON_ArrayForEach(stack_item, stack_json) {
     if (cJSON_IsString(stack_item) && stack_item->valuestring != NULL) {
-      stack[i] = malloc(strlen(stack_item->valuestring) + 1);
-
-      strcpy(stack[i], stack_item->valuestring);
-
-      ++i;
+      StringList_add(stack, stack_item->valuestring);
     }
   }
 
-  cJSON_free(stack_item);
+  cJSON_Delete(stack_item);
 
   return stack;
 }
 
 Person *person_from_json(cJSON *person_json) {
   uuid_t id = {'\0'};
-  char *name = NULL, *nickname = NULL, **stack = NULL;
+  char *name = NULL, *nickname = NULL;
   Date date_of_birth;
 
   cJSON *id_json = cJSON_GetObjectItemCaseSensitive(person_json, "id");
@@ -127,11 +130,11 @@ Person *person_from_json(cJSON *person_json) {
 
   cJSON *stack_json = cJSON_GetObjectItemCaseSensitive(person_json, "stack");
 
-  stack = copy_person_json_stack_items(stack_json);
+  StringList *stack = copy_person_json_stack_items(stack_json);
 
   Person *person = create_person(id, name, nickname, date_of_birth, stack);
 
-  free(stack);
+  StringList_free(stack);
 
   return person;
 }
