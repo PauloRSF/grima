@@ -5,6 +5,7 @@
 #include <libpq-fe.h>
 #include <log.h>
 
+#include "../http/query.h"
 #include "app.h"
 #include "database.h"
 #include "modules/persons/interface/http/persons_count_handler.c"
@@ -25,9 +26,18 @@ void handle_ping_endpoint(ServerContext *server_ctx, Request *request,
   send_response(server_ctx, response);
 }
 
+void log_request(Request *request) {
+  char *query_string = get_query_string(request->query);
+
+  log_info("%s %s?%s", get_method_name(request->method), request->path,
+           query_string);
+
+  free(query_string);
+}
+
 void handle_request(ServerContext *server_ctx, Request *request,
                     Response *response) {
-  log_info("%s %s", get_method_name(request->method), request->path);
+  log_request(request);
 
   add_header(response->headers, "Connection", "close");
 
