@@ -1,6 +1,16 @@
 version: "3.8"
 
 services:
+  app:
+    image: alo
+    volumes:
+      - .:/app
+    ports:
+      - 3000:3000
+    environment:
+      - PORT=3000
+      - DATABASE_URI=postgres://postgres:postgres@postgres:5432/grima_development
+
   postgres:
     image: postgres:15.4
     volumes:

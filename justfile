@@ -3,9 +3,9 @@ source_files := `find -name '*.c' -not -path "./app/modules/persons/interface/*"
 compilation_flags := "-g -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Iapp -DLOG_USE_COLOR"
 link_flags := "-lpq -luuid"
 
-dev port:
+dev:
   @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}
-  @{{output_file}} {{port}}
+  @{{output_file}}
 
 valgrind port:
   @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}

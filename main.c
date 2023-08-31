@@ -33,9 +33,9 @@ int main(int argc, char **argv) {
   signal(SIGINT, shutdown_handler);
   signal(SIGSEGV, shutdown_handler);
 
-  int port_argument = argc > 1 ? atoi(argv[1]) : 0;
+  char *port_env_var = getenv("PORT");
 
-  int port = port_argument != 0 ? port_argument : DEFAULT_PORT;
+  int port = port_env_var != NULL ? atoi(port_env_var) : DEFAULT_PORT;
 
   start_app(port, &ctx);
 

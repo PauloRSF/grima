@@ -17,5 +17,5 @@ First, you need to run PostgreSQL and add the connection URI to `.env`. See the 
 Then, you just (pun intended) need to install [just](https://github.com/casey/just). After that, you can run the `dev` script:
 
 ```sh
-just dev <port>
+just dev
 ```
