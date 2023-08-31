@@ -46,7 +46,7 @@ void create_person_handler(AppContext *app_ctx, Request *request,
   if (saved_person == NULL) {
     if (error) {
       get_response_for_error(error, response);
-      // free_error(error);
+      free_error(error);
     } else {
       response->status_code = 500;
     }
@@ -66,8 +66,12 @@ void create_person_handler(AppContext *app_ctx, Request *request,
   sprintf(location_response_header_value, "%s%s", endpoint_path,
           saved_person_uuid);
 
+  free_person(saved_person);
+
   add_header(response->headers, "Location", location_response_header_value);
   add_header(response->headers, "Content-Type", "application/json");
+
+  free(location_response_header_value);
 
   send_response(&app_ctx->server_context, response);
 }

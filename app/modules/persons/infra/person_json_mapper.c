@@ -102,7 +102,10 @@ StringList *copy_person_json_stack_items(cJSON *stack_json) {
 
   cJSON_ArrayForEach(stack_item, stack_json) {
     if (cJSON_IsString(stack_item) && stack_item->valuestring != NULL) {
-      StringList_add(stack, stack_item->valuestring);
+      char *item = malloc(strlen(stack_item->valuestring) + 1);
+      strcpy(item, stack_item->valuestring);
+
+      StringList_add(stack, item);
     }
   }
 

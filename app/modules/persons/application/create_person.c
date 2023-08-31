@@ -92,6 +92,8 @@ bool validate_person_creation_data(DatabaseContext *database_context,
   if (has_errors)
     *error = (Error *)create_validation_error(NULL, details);
 
+  StringList_free(details);
+
   return !has_errors;
 }
 

@@ -23,6 +23,9 @@ ValidationError *create_validation_error(char *message, StringList *details) {
 }
 
 void free_error(Error *error) {
+  if (error == NULL)
+    return;
+
   if (error->kind == ValidationErrorKind) {
     ValidationError *validation_error = (ValidationError *)&error;
 
