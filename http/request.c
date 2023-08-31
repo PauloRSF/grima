@@ -3,6 +3,8 @@
 #include <string.h>
 
 #include <picohttpparser.h>
+#include <string_map.h>
+#include <yuarel.h>
 
 #include "headers.h"
 #include "request.h"
@@ -43,12 +45,30 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
 
   request->method = get_method_by_name(method_str);
 
-  char path_str[path_length + 1];
-  memset(path_str, '\0', path_length + 1);
-  strncpy(path_str, path, path_length);
+  int fake_url_length = strlen("http://foo.com") + path_length + 1;
+  char *fake_url_to_parse = malloc(fake_url_length + 1);
+  snprintf(fake_url_to_parse, fake_url_length, "http://foo.com%s", path);
 
-  request.path = (char *)calloc(1, path_length + 1);
-  strcpy(request.path, path_str);
+  struct yuarel url;
+
+  yuarel_parse(&url, fake_url_to_parse);
+
+  request->path = malloc(strlen(url.path) + 2);
+  strcpy(request->path, "/");
+  strcat(request->path, url.path);
+
+  request->query = StringMap_new();
+
+  struct yuarel_param query_params[3];
+
+  int parsed_query_params_count =
+      yuarel_parse_query(url.query, '&', query_params, 2);
+
+  for (int i = 0; i < parsed_query_params_count; ++i) {
+    char *value = query_params[i].val ? query_params[i].val : "";
+
+    StringMap_set(request->query, query_params[i].key, value);
+  }
 
   Headers headers_map = create_headers();
 
@@ -85,6 +105,7 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
 void free_request(Request *request) {
   free(request->path);
   free(request->body);
+  StringMap_free(request->query);
   free_headers(request->headers);
   free(request);
 }

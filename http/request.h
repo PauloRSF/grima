@@ -11,6 +11,7 @@ typedef enum method {
 typedef struct request {
   Method method;
   char *path;
+  struct hashmap *query;
   struct hashmap *headers;
   char *body;
 } Request;
