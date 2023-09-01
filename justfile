@@ -7,9 +7,9 @@ dev:
   @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}
   @{{output_file}}
 
-valgrind port:
+valgrind:
   @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}
-  valgrind --leak-check=full --track-origins=yes {{output_file}} {{port}}
+  valgrind --leak-check=full --track-origins=yes {{output_file}}
 
 create-development-db:
   docker compose cp ./sql/init.development.sql postgres:/opt
