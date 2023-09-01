@@ -12,7 +12,7 @@
 cJSON *person_to_json_object(Person *person) {
   cJSON *json = cJSON_CreateObject();
 
-  char person_id_string[37];
+  char person_id_string[UUID_STR_LEN];
   uuid_unparse_lower(person->id, person_id_string);
 
   if (cJSON_AddStringToObject(json, "id", person_id_string) == NULL) {

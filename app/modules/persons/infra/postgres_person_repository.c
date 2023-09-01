@@ -18,7 +18,7 @@ StringList *get_person_stack(PGconn *database_connection, uuid_t id) {
   int paramLengths[1];
   int paramFormats[1];
 
-  char id_str[37];
+  char id_str[UUID_STR_LEN];
   uuid_unparse_lower(id, id_str);
   paramValues[0] = id_str;
   paramLengths[0] = strlen(id_str);
@@ -65,7 +65,7 @@ Person *person_repository_get_by_id(PGconn *database_connection, uuid_t id) {
   int paramLengths[1];
   int paramFormats[1];
 
-  char id_str[37] = {'\0'};
+  char id_str[UUID_STR_LEN] = {'\0'};
   uuid_unparse_lower(id, id_str);
   paramValues[0] = id_str;
   paramLengths[0] = strlen(id_str);
@@ -296,7 +296,7 @@ Person *person_repository_store(PGconn *database_connection, Person *person) {
   int paramLengths[4];
   int paramFormats[4];
 
-  char id_str[37];
+  char id_str[UUID_STR_LEN];
   uuid_unparse_lower(person->id, id_str);
   paramValues[0] = id_str;
   paramLengths[0] = strlen(id_str);

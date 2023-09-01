@@ -108,7 +108,7 @@ Person *create_person_use_case(DatabaseContext *database_context,
 
   uuid_t id;
   uuid_generate(id);
-  char id_string[37] = {'\0'};
+  char id_string[UUID_STR_LEN] = {'\0'};
   uuid_unparse_lower(id, id_string);
 
   cJSON_AddStringToObject(person_json, "id", id_string);

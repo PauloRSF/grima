@@ -56,7 +56,7 @@ void create_person_handler(AppContext *app_ctx, Request *request,
 
   response->status_code = 201;
 
-  char saved_person_uuid[37];
+  char saved_person_uuid[UUID_STR_LEN];
   uuid_unparse_lower(saved_person->id, saved_person_uuid);
 
   char *endpoint_path = "/pessoas/";

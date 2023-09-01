@@ -12,7 +12,7 @@
 void get_person_handler(AppContext *app_ctx, Request *request,
                         Response *response) {
   uuid_t id;
-  char id_param[37] = {'\0'};
+  char id_param[UUID_STR_LEN] = {'\0'};
   strncpy(id_param, request->path + sizeof("pessoas/"), 36);
   uuid_parse(id_param, id);
 
