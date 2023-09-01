@@ -2,6 +2,7 @@
 #define STRING_LIST_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef struct string_list_node {
   char *data;
@@ -16,6 +17,7 @@ StringList *StringList_new();
 void StringList_add(StringList *list, char *data);
 StringList *StringList_clone(StringList *list);
 bool StringList_is_empty(StringList *list);
+size_t StringList_count(StringList *list);
 void StringList_free(StringList *list);
 
 #define StringList_ForEach(element, list)                                      \

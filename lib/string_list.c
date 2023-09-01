@@ -17,7 +17,8 @@ void StringList_add(StringList *list, char *item) {
     return;
 
   StringListNode *new_node = calloc(sizeof(StringListNode), 1);
-  new_node->data = item;
+  new_node->data = malloc(strlen(item) + 1);
+  strcpy(new_node->data, item);
   new_node->next = NULL;
 
   if (list->items == NULL) {
@@ -68,6 +69,18 @@ StringList *StringList_clone(StringList *list) {
 
 bool StringList_is_empty(StringList *list) {
   return list == NULL || list->items == NULL;
+}
+
+size_t StringList_count(StringList *list) {
+  if (StringList_is_empty(list))
+    return 0;
+
+  size_t count = 0;
+  StringListNode *item = NULL;
+
+  StringList_ForEach(item, list) { ++count; }
+
+  return count;
 }
 
 void StringList_free(StringList *list) {
