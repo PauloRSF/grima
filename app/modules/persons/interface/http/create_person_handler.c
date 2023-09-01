@@ -66,6 +66,7 @@ void create_person_handler(AppContext *app_ctx, Request *request,
   sprintf(location_response_header_value, "%s%s", endpoint_path,
           saved_person_uuid);
 
+  response->body = person_to_json(saved_person);
   free_person(saved_person);
 
   add_header(response->headers, "Location", location_response_header_value);
