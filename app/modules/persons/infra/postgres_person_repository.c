@@ -215,7 +215,7 @@ bool person_repository_is_nickname_taken(PGconn *database_connection,
 }
 
 size_t person_repository_count(PGconn *database_connection) {
-  const char *query = "SELECT COUNT(id) as persons_count FROM persons";
+  const char *query = "SELECT COUNT(id) AS persons_count FROM persons";
 
   log_debug("%s %s", DATABASE_LOG_TAG, query);
 
@@ -245,45 +245,75 @@ size_t person_repository_count(PGconn *database_connection) {
 
 StringList *insert_person_stack(PGconn *database_connection, uuid_t person_id,
                                 StringList *stack) {
-  if (stack == NULL)
-    return NULL;
+  char query[512] = "INSERT INTO person_techs (person_id, name) VALUES ";
 
-  char *query = "INSERT INTO person_techs (person_id, name) "
-                "VALUES ($1, $2) RETURNING *";
-
-  StringList *saved_stack = StringList_new();
+  size_t param_index = 1;
   StringListNode *item = NULL;
 
+  size_t items_count = StringList_count(stack);
+  char term[16] = {'\0'};
+
   StringList_ForEach(item, stack) {
-    const char *paramValues[2];
-    int paramLengths[2];
-    int paramFormats[2];
+    if (param_index == (items_count * 2) - 1)
+      break;
 
-    char id_str[37];
-    uuid_unparse_lower(person_id, id_str);
-    paramValues[0] = id_str;
-    paramLengths[0] = strlen(id_str);
-    paramFormats[0] = 0;
-
-    paramValues[1] = item->data;
-    paramLengths[1] = strlen(item->data);
-    paramFormats[1] = 0;
-
-    log_debug("%s %s", DATABASE_LOG_TAG, query);
-
-    PGresult *res = PQexecParams(database_connection, query, 2, NULL,
-                                 paramValues, paramLengths, paramFormats, 0);
-
-    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-      fprintf(stderr, "INSERT failed: %s", PQerrorMessage(database_connection));
-      PQclear(res);
-      free(saved_stack);
-
-      return NULL;
-    }
-
-    PQclear(res);
+    sprintf(term, "($%lu,$%lu),", param_index, param_index + 1);
+    strcat(query, term);
+    param_index += 2;
   }
+
+  sprintf(term, "($%lu,$%lu)", param_index, param_index + 1);
+  strcat(query, term);
+
+  strcat(query, " RETURNING *");
+
+  StringList *saved_stack = StringList_new();
+
+  const char *paramValues[items_count * 2];
+  int paramLengths[items_count * 2];
+  int paramFormats[items_count * 2];
+
+  char id_str[UUID_STR_LEN];
+  uuid_unparse_lower(person_id, id_str);
+
+  size_t index = 0;
+
+  StringList_ForEach(item, stack) {
+    paramValues[index] = id_str;
+    paramLengths[index] = strlen(id_str);
+    paramFormats[index] = 0;
+
+    paramValues[index + 1] = item->data;
+    paramLengths[index + 1] = strlen(item->data);
+    paramFormats[index + 1] = 0;
+
+    index += 2;
+  }
+
+  log_debug("%s %s", DATABASE_LOG_TAG, query);
+
+  PGresult *res =
+      PQexecParams(database_connection, query, (items_count * 2), NULL,
+                   paramValues, paramLengths, paramFormats, 0);
+
+  if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+    fprintf(stderr, "INSERT failed: %s", PQerrorMessage(database_connection));
+    PQclear(res);
+    StringList_free(saved_stack);
+
+    return NULL;
+  }
+
+  for (int i = 0; i < PQntuples(res); ++i) {
+    char *name_field = PQgetvalue(res, i, PQfnumber(res, "name"));
+
+    char *name = malloc(strlen(name_field) + 1);
+    strcpy(name, name_field);
+
+    StringList_add(saved_stack, name);
+  }
+
+  PQclear(res);
 
   return saved_stack;
 }
@@ -336,7 +366,9 @@ Person *person_repository_store(PGconn *database_connection, Person *person) {
   uuid_parse(id_field, person_id);
 
   StringList *stack =
-      insert_person_stack(database_connection, person_id, person->stack);
+      person->stack != NULL
+          ? insert_person_stack(database_connection, person_id, person->stack)
+          : NULL;
 
   char *name_field = PQgetvalue(res, 0, PQfnumber(res, "name"));
   char *nickname_field = PQgetvalue(res, 0, PQfnumber(res, "nickname"));
@@ -348,7 +380,7 @@ Person *person_repository_store(PGconn *database_connection, Person *person) {
   Person *stored_person = create_person(person_id, name_field, nickname_field,
                                         date_of_birth, stack);
 
-  free(stack);
+  StringList_free(stack);
   PQclear(res);
 
   return stored_person;
