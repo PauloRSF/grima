@@ -27,12 +27,17 @@ void handle_ping_endpoint(ServerContext *server_ctx, Request *request,
 }
 
 void log_request(Request *request) {
-  char *query_string = get_query_string(request->query);
+  if (request->query) {
+    char *query_string = get_query_string(request->query);
 
-  log_info("%s %s?%s", get_method_name(request->method), request->path,
-           query_string);
+    log_info("%s %s?%s", get_method_name(request->method), request->path,
+             query_string);
 
-  free(query_string);
+    free(query_string);
+  } else {
+
+    log_info("%s %s", get_method_name(request->method), request->path);
+  }
 }
 
 void handle_request(ServerContext *server_ctx, Request *request,
