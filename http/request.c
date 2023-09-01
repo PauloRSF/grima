@@ -57,12 +57,12 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
   strcpy(request->path, "/");
   strcat(request->path, url.path);
 
-  request->query = StringMap_new();
-
   struct yuarel_param query_params[3];
 
   int parsed_query_params_count =
       yuarel_parse_query(url.query, '&', query_params, 2);
+
+  request->query = parsed_query_params_count > 0 ? StringMap_new() : NULL;
 
   for (int i = 0; i < parsed_query_params_count; ++i) {
     char *value = query_params[i].val ? query_params[i].val : "";
@@ -105,7 +105,8 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
 void free_request(Request *request) {
   free(request->path);
   free(request->body);
-  StringMap_free(request->query);
+  if (request->query)
+    StringMap_free(request->query);
   free_headers(request->headers);
   free(request);
 }
