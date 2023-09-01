@@ -113,10 +113,52 @@ Person *person_repository_get_by_id(PGconn *database_connection, uuid_t id) {
   return person;
 }
 
+Person *deserialize_person_from_search(PGresult *res, size_t *index,
+                                       size_t row_count) {
+  char *id_field = PQgetvalue(res, *index, PQfnumber(res, "id"));
+  uuid_t person_id = {'\0'};
+  uuid_parse(id_field, person_id);
+
+  char *name_field = PQgetvalue(res, *index, PQfnumber(res, "name"));
+  char *nickname_field = PQgetvalue(res, *index, PQfnumber(res, "nickname"));
+
+  char *date_of_birth_field =
+      PQgetvalue(res, *index, PQfnumber(res, "date_of_birth"));
+  Date date_of_birth = date_from_string(date_of_birth_field);
+
+  StringList *stack = StringList_new();
+  char *current_id_field = id_field;
+
+  while (strcmp(current_id_field, id_field) == 0) {
+    char *tech_name_field =
+        PQgetvalue(res, *index, PQfnumber(res, "tech_name"));
+
+    char *tech_name = malloc(strlen(tech_name_field) + 1);
+    strcpy(tech_name, tech_name_field);
+
+    StringList_add(stack, tech_name);
+
+    if (++(*index) < row_count) {
+      current_id_field = PQgetvalue(res, *index, PQfnumber(res, "id"));
+    } else {
+      break;
+    }
+  }
+
+  Person *person = create_person(person_id, name_field, nickname_field,
+                                 date_of_birth, stack);
+
+  StringList_free(stack);
+
+  return person;
+}
+
 PersonSearchResult person_repository_search(PGconn *database_connection,
                                             char *search_term) {
   const char *query =
-      "SELECT * FROM persons WHERE id IN (SELECT DISTINCT id FROM persons AS p "
+      "SELECT p1.*, pt1.name as \"tech_name\" FROM persons AS p1 JOIN "
+      "person_techs AS pt1 on "
+      "pt1.person_id=p1.id WHERE id IN (SELECT DISTINCT id FROM persons AS p "
       "JOIN person_techs AS pt ON pt.person_id=p.id WHERE p.name LIKE $1 OR "
       "p.nickname LIKE $1 OR pt.name LIKE $1)";
 
@@ -146,32 +188,23 @@ PersonSearchResult person_repository_search(PGconn *database_connection,
     return result;
   }
 
-  if (PQntuples(res) < 1)
+  size_t row_count = PQntuples(res);
+
+  if (row_count < 1)
     return result;
 
-  result.persons_count = PQntuples(res);
-  result.persons = calloc(result.persons_count, sizeof(Person *));
+  result.persons = NULL;
 
-  for (int i = 0; i < result.persons_count; ++i) {
-    char *id_field = PQgetvalue(res, i, PQfnumber(res, "id"));
-    char *name_field = PQgetvalue(res, i, PQfnumber(res, "name"));
-    char *nickname_field = PQgetvalue(res, i, PQfnumber(res, "nickname"));
-    char *date_of_birth_field =
-        PQgetvalue(res, i, PQfnumber(res, "date_of_birth"));
+  size_t current_row_index = 0;
 
-    Date date_of_birth = date_from_string(date_of_birth_field);
+  while (current_row_index < row_count) {
+    Person *person =
+        deserialize_person_from_search(res, &current_row_index, row_count);
 
-    uuid_t person_id = {'\0'};
-    uuid_parse(id_field, person_id);
-
-    StringList *stack = get_person_stack(database_connection, person_id);
-
-    Person *person = create_person(person_id, name_field, nickname_field,
-                                   date_of_birth, stack);
-
-    StringList_free(stack);
-
-    result.persons[i] = person;
+    result.persons =
+        realloc(result.persons, sizeof(Person *) * (result.persons_count + 1));
+    result.persons[result.persons_count] = person;
+    result.persons_count++;
   }
 
   PQclear(res);
