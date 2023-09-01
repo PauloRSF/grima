@@ -87,14 +87,14 @@ bool validate_person_creation_data(DatabaseContext *database_context,
     }
   }
 
-  bool has_errors = !StringList_is_empty(details);
+  bool is_valid = StringList_is_empty(details);
 
-  if (has_errors)
+  if (!is_valid)
     *error = (Error *)create_validation_error(NULL, details);
 
   StringList_free(details);
 
-  return !has_errors;
+  return is_valid;
 }
 
 Person *create_person_use_case(DatabaseContext *database_context,
