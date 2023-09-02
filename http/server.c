@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <liburing.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,94 +12,13 @@
 #include "server.h"
 
 void shutdown_server(ServerContext *ctx) {
-  close(ctx->client_socket_descriptor);
+  io_uring_queue_exit(ctx->ring);
   shutdown(ctx->server_descriptor, SHUT_RDWR);
 };
 
-Request *receive_request(ServerContext *ctx) {
-  socklen_t address_size = sizeof(ctx->address);
+struct io_uring ring;
 
-  int client_socket_descriptor = accept(
-      ctx->server_descriptor, (struct sockaddr *)&ctx->address, &address_size);
-
-  if (client_socket_descriptor == -1) {
-    perror("Could not open client socket");
-    exit(errno);
-  }
-
-  ctx->client_socket_descriptor = client_socket_descriptor;
-  char *raw_request = NULL;
-
-  char client_receive_buffer[CLIENT_RECEIVE_BUFFER_SIZE] = {0};
-
-  int bytes_read = -1;
-  size_t raw_request_length = 0;
-
-  while (true) {
-    memset(client_receive_buffer, '\0', CLIENT_RECEIVE_BUFFER_SIZE);
-
-    bytes_read = read(client_socket_descriptor, &client_receive_buffer,
-                      CLIENT_RECEIVE_BUFFER_SIZE);
-
-    if (bytes_read == -1) {
-      perror("Could not read from client socket");
-      exit(errno);
-    }
-
-    raw_request_length += bytes_read;
-
-    if (bytes_read != 0) {
-      if (raw_request == NULL) {
-        raw_request = calloc(1, raw_request_length + 1);
-        strncpy(raw_request, client_receive_buffer, bytes_read);
-      } else {
-        raw_request = realloc(raw_request, raw_request_length + 1);
-        strncat(raw_request, client_receive_buffer, bytes_read);
-      }
-    }
-
-    if (bytes_read == 0 || bytes_read < CLIENT_RECEIVE_BUFFER_SIZE)
-      break;
-  }
-
-  if (raw_request == NULL)
-    return NULL;
-
-  Request *request = parse_request(raw_request, raw_request_length);
-
-  free(raw_request);
-
-  return request;
-};
-
-void send_response(ServerContext *ctx, Response *response) {
-  char *response_payload = build_http_response_payload(response);
-
-  int write_result = write(ctx->client_socket_descriptor, response_payload,
-                           strlen(response_payload));
-
-  if (write_result == -1) {
-    perror("Could not write to client socket");
-    exit(errno);
-  }
-
-  free(response_payload);
-};
-
-void accept_connection(ServerContext *ctx, RequestHandler handle_request) {
-  Request *request = receive_request(ctx);
-
-  if (request != NULL) {
-    Response *response = create_response();
-
-    handle_request(ctx, request, response);
-
-    free_request(request);
-    free_response(response);
-  }
-
-  close(ctx->client_socket_descriptor);
-};
+char client_buffers[65536][CLIENT_RECEIVE_BUFFER_SIZE];
 
 ServerContext init_server(int port) {
   int server_descriptor;
@@ -133,11 +53,126 @@ ServerContext init_server(int port) {
 
   ServerContext ctx = {.server_descriptor = server_descriptor};
 
+  ctx.ring = &ring;
+
+  io_uring_queue_init(256, ctx.ring, 0);
+
   return ctx;
 };
 
+void request_accept_connection(ServerContext *ctx) {
+  struct io_uring_sqe *sqe = io_uring_get_sqe(ctx->ring);
+
+  socklen_t address_size = sizeof(ctx->address);
+
+  io_uring_prep_accept(sqe, ctx->server_descriptor,
+                       (struct sockaddr *)&ctx->address, &address_size, 0);
+
+  struct iorequest *req = malloc(sizeof(struct iorequest *));
+
+  req->event_type = EVENT_TYPE_ACCEPT_CONNECTION;
+
+  io_uring_sqe_set_data(sqe, req);
+
+  io_uring_submit(ctx->ring);
+}
+
+void request_read_request(ServerContext *ctx, int client_descriptor) {
+  struct io_uring_sqe *sqe = io_uring_get_sqe(ctx->ring);
+
+  io_uring_prep_read(sqe, client_descriptor, client_buffers[client_descriptor],
+                     CLIENT_RECEIVE_BUFFER_SIZE, 0);
+
+  struct iorequest *req = malloc(sizeof(struct iorequest *));
+
+  req->event_type = EVENT_TYPE_HANDLE_REQUEST;
+  req->client_socket = client_descriptor;
+
+  io_uring_sqe_set_data(sqe, req);
+
+  io_uring_submit(ctx->ring);
+}
+
+void send_response(ServerContext *ctx, Response *response) {
+  struct io_uring_sqe *sqe = io_uring_get_sqe(ctx->ring);
+
+  socklen_t address_size = sizeof(ctx->address);
+
+  char *response_payload = build_http_response_payload(response);
+
+  io_uring_prep_write(sqe, ctx->client_socket_descriptor, response_payload,
+                      strlen(response_payload), 0);
+
+  struct iorequest *req = malloc(sizeof(struct iorequest *));
+
+  req->event_type = EVENT_TYPE_CLOSE_CONNECTION;
+  req->client_socket = ctx->client_socket_descriptor;
+
+  io_uring_sqe_set_data(sqe, req);
+
+  io_uring_submit(ctx->ring);
+
+  free(response_payload);
+};
+
 void start_server(ServerContext *ctx, RequestHandler handle_request) {
-  while (true) {
-    accept_connection(ctx, handle_request);
+  struct io_uring_cqe *cqe;
+
+  request_accept_connection(ctx);
+
+  while (1) {
+    int ret = io_uring_wait_cqe(ctx->ring, &cqe);
+
+    struct iorequest *req = (struct iorequest *)cqe->user_data;
+
+    if (ret < 0) {
+      perror("io_uring_wait_cqe");
+      exit(1);
+    }
+
+    if (cqe->res < 0) {
+      fprintf(stderr, "Async request failed: %s for event: %d\n",
+              strerror(-cqe->res), req->event_type);
+    }
+
+    switch (req->event_type) {
+    case EVENT_TYPE_ACCEPT_CONNECTION:
+      request_accept_connection(ctx);
+
+      request_read_request(ctx, cqe->res);
+
+      free(req);
+
+      break;
+    case EVENT_TYPE_HANDLE_REQUEST:
+      if (cqe->res > 0) {
+        Request *request =
+            parse_request(client_buffers[req->client_socket], cqe->res);
+
+        Response *response = create_response();
+
+        handle_request(
+            &(ServerContext){.server_descriptor = ctx->server_descriptor,
+                             .client_socket_descriptor = req->client_socket,
+                             .ring = ctx->ring,
+                             .address = ctx->address},
+            request, response);
+
+        free_request(request);
+        free_response(response);
+      }
+
+      free(req);
+
+      break;
+    case EVENT_TYPE_CLOSE_CONNECTION:
+      close(req->client_socket);
+
+      free(req);
+
+      break;
+    }
+
+    io_uring_cqe_seen(ctx->ring, cqe);
   }
 }

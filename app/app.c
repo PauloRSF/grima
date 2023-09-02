@@ -44,6 +44,8 @@ void handle_request(ServerContext *server_ctx, Request *request,
                     Response *response) {
   log_request(request);
 
+  app_ctx.server_context = *server_ctx;
+
   add_header(response->headers, "Connection", "close");
 
   if (strcmp(request->path, "/ping") == 0)

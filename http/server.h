@@ -1,5 +1,6 @@
 #ifndef GRIMA_SERVER_H
 #define GRIMA_SERVER_H
+#include <liburing.h>
 #include <netinet/in.h>
 
 #include "headers.h"
@@ -10,9 +11,19 @@
 
 typedef struct server_context {
   int server_descriptor;
+  struct io_uring *ring;
   struct sockaddr_in address;
   int client_socket_descriptor;
 } ServerContext;
+
+struct iorequest {
+  int event_type;
+  int client_socket;
+};
+
+#define EVENT_TYPE_ACCEPT_CONNECTION 0
+#define EVENT_TYPE_CLOSE_CONNECTION 1
+#define EVENT_TYPE_HANDLE_REQUEST 2
 
 typedef void (*RequestHandler)(ServerContext *ctx, Request *request,
                                Response *response);

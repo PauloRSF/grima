@@ -1,7 +1,7 @@
 output_file := `mktemp`
 source_files := `find -name '*.c' -not -path "./app/modules/persons/interface/*" -not -path "./app/modules/persons/application/*" -type f -printf '%p '`
-compilation_flags := "-g -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Iapp -DLOG_USE_COLOR"
-link_flags := "-lpq -luuid"
+compilation_flags := "-g -O3 -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Iapp -DLOG_USE_COLOR"
+link_flags := "-lpq -luuid -luring"
 
 dev:
   @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}

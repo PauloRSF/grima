@@ -1,0 +1,9 @@
+-I
+/usr/include/postgresql
+
+-I
+lib
+
+-lpq
+
+-luring
