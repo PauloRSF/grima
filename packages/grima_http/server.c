@@ -63,10 +63,7 @@ ServerContext init_server(int port) {
 void request_accept_connection(ServerContext *ctx) {
   struct io_uring_sqe *sqe = io_uring_get_sqe(ctx->ring);
 
-  socklen_t address_size = sizeof(ctx->address);
-
-  io_uring_prep_accept(sqe, ctx->server_descriptor,
-                       (struct sockaddr *)&ctx->address, &address_size, 0);
+  io_uring_prep_accept(sqe, ctx->server_descriptor, NULL, NULL, 0);
 
   struct iorequest *req = malloc(sizeof(struct iorequest *));
 
@@ -93,24 +90,23 @@ void request_read_request(ServerContext *ctx, int client_descriptor) {
   io_uring_submit(ctx->ring);
 }
 
-void send_response(ServerContext *ctx, Response *response) {
-  struct io_uring_sqe *sqe = io_uring_get_sqe(ctx->ring);
-
-  socklen_t address_size = sizeof(ctx->address);
+void send_response(ServerContext *server_ctx, RequestContext *request_ctx,
+                   Response *response) {
+  struct io_uring_sqe *sqe = io_uring_get_sqe(server_ctx->ring);
 
   char *response_payload = build_http_response_payload(response);
 
-  io_uring_prep_write(sqe, ctx->client_socket_descriptor, response_payload,
-                      strlen(response_payload), 0);
+  io_uring_prep_write(sqe, request_ctx->client_socket_descriptor,
+                      response_payload, strlen(response_payload), 0);
 
   struct iorequest *req = malloc(sizeof(struct iorequest *));
 
   req->event_type = EVENT_TYPE_CLOSE_CONNECTION;
-  req->client_socket = ctx->client_socket_descriptor;
+  req->client_socket = request_ctx->client_socket_descriptor;
 
   io_uring_sqe_set_data(sqe, req);
 
-  io_uring_submit(ctx->ring);
+  io_uring_submit(server_ctx->ring);
 
   free(response_payload);
 };

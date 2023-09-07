@@ -8,8 +8,8 @@
 
 #include "../../app.h"
 
-void get_person_handler(AppContext *app_ctx, Request *request,
-                        Response *response) {
+void get_person_handler(AppContext *app_ctx, RequestContext *request_ctx,
+                        Request *request, Response *response) {
   uuid_t id;
   char id_param[UUID_STR_LEN] = {'\0'};
   strncpy(id_param, request->path + sizeof("pessoas/"), 36);
@@ -19,7 +19,7 @@ void get_person_handler(AppContext *app_ctx, Request *request,
 
   if (!person) {
     response->status_code = 404;
-    return send_response(&app_ctx->server_context, response);
+    return send_response(&app_ctx->server_context, request_ctx, response);
   }
 
   response->body = person_to_json(person);
@@ -28,5 +28,5 @@ void get_person_handler(AppContext *app_ctx, Request *request,
 
   add_header(response->headers, "Content-Type", "application/json");
 
-  send_response(&app_ctx->server_context, response);
+  send_response(&app_ctx->server_context, request_ctx, response);
 }

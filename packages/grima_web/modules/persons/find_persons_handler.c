@@ -10,13 +10,13 @@
 
 #include "../../app.h"
 
-void find_persons_handler(AppContext *app_ctx, Request *request,
-                          Response *response) {
+void find_persons_handler(AppContext *app_ctx, RequestContext *request_ctx,
+                          Request *request, Response *response) {
   char *search_term = StringMap_get(request->query, "t");
 
   if (search_term == NULL) {
     response->status_code = 400;
-    send_response(&app_ctx->server_context, response);
+    send_response(&app_ctx->server_context, request_ctx, response);
   }
 
   PersonSearchResult result =
@@ -28,5 +28,5 @@ void find_persons_handler(AppContext *app_ctx, Request *request,
 
   add_header(response->headers, "Content-Type", "application/json");
 
-  send_response(&app_ctx->server_context, response);
+  send_response(&app_ctx->server_context, request_ctx, response);
 }

@@ -10,20 +10,20 @@
 #include "../../app.h"
 #include "../../utils/http/http.h"
 
-void create_person_handler(AppContext *app_ctx, Request *request,
-                           Response *response) {
+void create_person_handler(AppContext *app_ctx, RequestContext *request_ctx,
+                           Request *request, Response *response) {
   char *content_type = get_header_value(request->headers, "Content-Type");
 
   if (content_type == NULL) {
     response->status_code = 400;
-    return send_response(&app_ctx->server_context, response);
+    return send_response(&app_ctx->server_context, request_ctx, response);
   }
 
   bool has_json_body = strcmp(content_type, "application/json") == 0;
 
   if (!has_json_body) {
     response->status_code = 415;
-    return send_response(&app_ctx->server_context, response);
+    return send_response(&app_ctx->server_context, request_ctx, response);
   }
 
   cJSON *person_json = cJSON_Parse(request->body);
@@ -31,7 +31,7 @@ void create_person_handler(AppContext *app_ctx, Request *request,
   if (person_json == NULL) {
     cJSON_Delete(person_json);
     response->status_code = 422;
-    return send_response(&app_ctx->server_context, response);
+    return send_response(&app_ctx->server_context, request_ctx, response);
   }
 
   Error *error = NULL;
@@ -49,7 +49,7 @@ void create_person_handler(AppContext *app_ctx, Request *request,
       response->status_code = 500;
     }
 
-    return send_response(&app_ctx->server_context, response);
+    return send_response(&app_ctx->server_context, request_ctx, response);
   }
 
   response->status_code = 201;
@@ -72,5 +72,5 @@ void create_person_handler(AppContext *app_ctx, Request *request,
 
   free(location_response_header_value);
 
-  send_response(&app_ctx->server_context, response);
+  send_response(&app_ctx->server_context, request_ctx, response);
 }
