@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <liburing.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -111,13 +112,56 @@ void send_response(ServerContext *server_ctx, RequestContext *request_ctx,
   free(response_payload);
 };
 
+pthread_t thread;
+pthread_attr_t attr;
+
+struct qwe {
+  int client_socket;
+  ServerContext *server_ctx;
+  size_t bts;
+  RequestHandler handle_request;
+};
+
+void *abc(void *param) {
+  printf("aopsincoiask");
+  fflush(stdout);
+
+  struct qwe *asd = (struct qwe *)param;
+
+  Request *request =
+      parse_request(client_buffers[asd->client_socket], asd->bts);
+
+  Response *response = create_response();
+
+  asd->handle_request(
+      asd->server_ctx,
+      &(RequestContext){.client_socket_descriptor = asd->client_socket},
+      request, response);
+
+  free_request(request);
+  free_response(response);
+
+  pthread_exit(0);
+
+  return NULL;
+}
+
+struct qwe asd = {
+    .client_socket = 0,
+    .server_ctx = NULL,
+    .bts = 0,
+    .handle_request = NULL,
+};
+
 void start_server(ServerContext *ctx, RequestHandler handle_request) {
   struct io_uring_cqe *cqe;
 
   request_accept_connection(ctx);
 
   while (1) {
+    printf("poipoipo");
     int ret = io_uring_wait_cqe(ctx->ring, &cqe);
+    printf("hjklhjkhl");
 
     struct iorequest *req = (struct iorequest *)cqe->user_data;
 
@@ -142,23 +186,22 @@ void start_server(ServerContext *ctx, RequestHandler handle_request) {
       break;
     case EVENT_TYPE_HANDLE_REQUEST:
       if (cqe->res > 0) {
-        Request *request =
-            parse_request(client_buffers[req->client_socket], cqe->res);
+        asd.client_socket = req->client_socket;
+        asd.server_ctx = ctx;
+        asd.bts = cqe->res;
+        asd.handle_request = handle_request;
 
-        Response *response = create_response();
+        printf("ovimsaopiscm");
 
-        handle_request(
-            &(ServerContext){.server_descriptor = ctx->server_descriptor,
-                             .client_socket_descriptor = req->client_socket,
-                             .ring = ctx->ring,
-                             .address = ctx->address},
-            request, response);
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        pthread_create(&thread, &attr, abc, (void *)&asd);
 
-        free_request(request);
-        free_response(response);
+        // sleep(1);
+        // pthread_join(thread, NULL);
       }
 
-      free(req);
+      // free(req);
 
       break;
     case EVENT_TYPE_CLOSE_CONNECTION:
