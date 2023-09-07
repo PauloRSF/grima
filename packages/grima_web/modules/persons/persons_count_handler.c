@@ -3,10 +3,10 @@
 #include <string.h>
 
 #include <cJSON.h>
+#include <grima_core.h>
 #include <uuid/uuid.h>
 
-#include "../../../../app.h"
-#include "../../application/count_persons.c"
+#include "../../app.h"
 
 void persons_count_handler(AppContext *app_ctx, Request *request,
                            Response *response) {

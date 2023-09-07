@@ -25,6 +25,8 @@ typedef struct response {
 
 Response *create_response();
 
+const char *get_status_text(unsigned short status_code);
+
 char *get_status_line(unsigned short status_code);
 
 char *build_http_response_payload(Response *response);

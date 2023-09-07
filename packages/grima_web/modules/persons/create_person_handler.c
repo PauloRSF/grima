@@ -3,14 +3,12 @@
 #include <string.h>
 
 #include <cJSON.h>
+#include <grima_core.h>
 #include <grima_http.h>
 #include <uuid/uuid.h>
 
-#include "../../../../app.h"
-#include "../../../../shared_kernel/interface/http/http.h"
-#include "../../application/create_person.c"
-#include "../../domain/person.h"
-#include "../../domain/person_repository.h"
+#include "../../app.h"
+#include "../../utils/http/http.h"
 
 void create_person_handler(AppContext *app_ctx, Request *request,
                            Response *response) {

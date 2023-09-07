@@ -11,7 +11,11 @@ typedef struct app_context {
   DatabaseContext *database_context;
 } AppContext;
 
+#define MATCH_PATH(request_path, path)                                         \
+  strncmp((request_path), (path), strlen((path))) == 0
+
 void start_app(int port, AppContext *ctx);
 
 void shutdown_app(AppContext ctx);
+
 #endif

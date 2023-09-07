@@ -8,8 +8,8 @@
 
 #include "app.h"
 #include "database.h"
-#include "modules/persons/interface/http/persons_count_handler.c"
-#include "modules/persons/interface/http/persons_handler.c"
+#include "modules/persons/persons_count_handler.c"
+#include "modules/persons/persons_handler.c"
 
 AppContext app_ctx;
 
@@ -40,26 +40,29 @@ void log_request(Request *request) {
   }
 }
 
+void log_response(Response *response) {
+  log_info("%d %s", response->status_code,
+           get_status_text(response->status_code));
+}
+
 void handle_request(ServerContext *server_ctx, Request *request,
                     Response *response) {
   log_request(request);
 
   app_ctx.server_context = *server_ctx;
 
-  add_header(response->headers, "Connection", "close");
+  if (MATCH_PATH(request->path, "/ping"))
+    handle_ping_endpoint(server_ctx, request, response);
+  else if (MATCH_PATH(request->path, "/pessoas"))
+    persons_handler(&app_ctx, request, response);
+  else if (MATCH_PATH(request->path, "/contagem-pessoas"))
+    persons_count_handler(&app_ctx, request, response);
+  else {
+    response->status_code = 404;
+    send_response(server_ctx, response);
+  }
 
-  if (strcmp(request->path, "/ping") == 0)
-    return handle_ping_endpoint(server_ctx, request, response);
-
-  if (strncmp(request->path, "/pessoas", strlen("/pessoas")) == 0)
-    return persons_handler(&app_ctx, request, response);
-
-  if (strcmp(request->path, "/contagem-pessoas") == 0)
-    return persons_count_handler(&app_ctx, request, response);
-
-  response->status_code = 404;
-
-  send_response(server_ctx, response);
+  log_response(response);
 }
 
 void start_app(int port, AppContext *ctx) {

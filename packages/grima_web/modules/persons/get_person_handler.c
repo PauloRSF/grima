@@ -3,11 +3,10 @@
 #include <string.h>
 
 #include <cJSON.h>
+#include <grima_core.h>
 #include <uuid/uuid.h>
 
-#include "../../../../app.h"
-#include "../../application/get_person_by_id.c"
-#include "../../domain/person.h"
+#include "../../app.h"
 
 void get_person_handler(AppContext *app_ctx, Request *request,
                         Response *response) {

@@ -3,14 +3,11 @@
 #include <string.h>
 
 #include <cJSON.h>
+#include <grima_core.h>
 #include <uuid/uuid.h>
 #include <yuarel.h>
 
-#include "../../../../app.h"
-#include "../../application/create_person.c"
-#include "../../application/get_person_by_id.c"
-#include "../../domain/person.h"
-#include "../../domain/person_repository.h"
+#include "../../app.h"
 #include "create_person_handler.c"
 #include "find_persons_handler.c"
 #include "get_person_handler.c"

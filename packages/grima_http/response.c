@@ -29,35 +29,40 @@ Response *create_response() {
   return response;
 }
 
-char *get_status_line(unsigned short status_code) {
-  char *status_text;
-
+const char *get_status_text(unsigned short status_code) {
   switch (status_code) {
   case 200:
-    status_text = HTTP_OK_TEXT;
+    return HTTP_OK_TEXT;
     break;
   case 201:
-    status_text = HTTP_CREATED_TEXT;
+    return HTTP_CREATED_TEXT;
     break;
   case 400:
-    status_text = HTTP_BAD_REQUEST_TEXT;
+    return HTTP_BAD_REQUEST_TEXT;
     break;
   case 404:
-    status_text = HTTP_NOT_FOUND_TEXT;
+    return HTTP_NOT_FOUND_TEXT;
     break;
   case 405:
-    status_text = HTTP_METHOD_NOT_ALLOWED_TEXT;
+    return HTTP_METHOD_NOT_ALLOWED_TEXT;
     break;
   case 415:
-    status_text = HTTP_UNSUPPORTED_MEDIA_TYPE_TEXT;
+    return HTTP_UNSUPPORTED_MEDIA_TYPE_TEXT;
     break;
   case 422:
-    status_text = HTTP_UNPROCESSABLE_ENTITY_TEXT;
+    return HTTP_UNPROCESSABLE_ENTITY_TEXT;
     break;
   case 500:
-    status_text = HTTP_INTERNAL_SERVER_ERROR_TEXT;
+    return HTTP_INTERNAL_SERVER_ERROR_TEXT;
+    break;
+  default:
+    return "Unknown";
     break;
   }
+}
+
+char *get_status_line(unsigned short status_code) {
+  const char *status_text = get_status_text(status_code);
 
   char *status_line =
       (char *)calloc(1, strlen(HTTP_VERSION) + strlen(status_text) +

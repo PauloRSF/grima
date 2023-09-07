@@ -7,9 +7,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <grima_web.h>
 #include <log.h>
-
-#include "app/app.h"
 
 #define DEFAULT_PORT 3000
 

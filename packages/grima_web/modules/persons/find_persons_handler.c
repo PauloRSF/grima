@@ -3,13 +3,12 @@
 #include <string.h>
 
 #include <cJSON.h>
+#include <grima_core.h>
+#include <grima_http.h>
 #include <string_map.h>
 #include <uuid/uuid.h>
 
-#include "../../../../app.h"
-#include "../../application/find_persons.c"
-#include "../../application/get_person_by_id.c"
-#include "../../domain/person.h"
+#include "../../app.h"
 
 void find_persons_handler(AppContext *app_ctx, Request *request,
                           Response *response) {

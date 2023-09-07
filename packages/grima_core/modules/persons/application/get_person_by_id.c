@@ -10,7 +10,6 @@
 #include <libpq-fe.h>
 #include <uuid/uuid.h>
 
-#include "../../../app.h"
 #include "../../../database.h"
 #include "../../../shared_kernel/dates/date.h"
 #include "../domain/person.h"
