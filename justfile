@@ -1,6 +1,6 @@
 output_file := `mktemp`
 source_files := `find -name '*.c' -not -path "./app/modules/persons/interface/*" -not -path "./app/modules/persons/application/*" -type f -printf '%p '`
-compilation_flags := "-g -O3 -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Iapp -DLOG_USE_COLOR"
+compilation_flags := "-g -O3 -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Iapp -Ipackages/grima_http -DLOG_USE_COLOR"
 link_flags := "-lpq -luuid -luring"
 
 dev:

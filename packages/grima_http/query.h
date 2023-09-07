@@ -1,5 +1,5 @@
-#ifndef GRIMA_QUERY_H
-#define GRIMA_QUERY_H
+#ifndef GRIMA_HTTP_QUERY_H
+#define GRIMA_HTTP_QUERY_H
 
 #include <string_map.h>
 

@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include <cJSON.h>
+#include <grima_http.h>
 #include <uuid/uuid.h>
 
-#include "../../../../../http/server.h"
 #include "../../../../app.h"
 #include "../../../../shared_kernel/interface/http/http.h"
 #include "../../application/create_person.c"

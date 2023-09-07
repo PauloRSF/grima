@@ -4,6 +4,9 @@
 -I
 lib
 
+-I
+packages/grima_http
+
 -lpq
 
 -luring

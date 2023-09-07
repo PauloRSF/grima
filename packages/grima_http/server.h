@@ -1,5 +1,5 @@
-#ifndef GRIMA_SERVER_H
-#define GRIMA_SERVER_H
+#ifndef GRIMA_HTTP_SERVER_H
+#define GRIMA_HTTP_SERVER_H
 #include <liburing.h>
 #include <netinet/in.h>
 

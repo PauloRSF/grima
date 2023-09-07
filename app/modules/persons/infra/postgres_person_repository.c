@@ -133,10 +133,7 @@ Person *deserialize_person_from_search(PGresult *res, size_t *index,
     char *tech_name_field =
         PQgetvalue(res, *index, PQfnumber(res, "tech_name"));
 
-    char *tech_name = malloc(strlen(tech_name_field) + 1);
-    strcpy(tech_name, tech_name_field);
-
-    StringList_add(stack, tech_name);
+    StringList_add(stack, tech_name_field);
 
     if (++(*index) < row_count) {
       current_id_field = PQgetvalue(res, *index, PQfnumber(res, "id"));

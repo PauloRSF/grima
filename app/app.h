@@ -1,9 +1,9 @@
 #ifndef GRIMA_APP_H
 #define GRIMA_APP_H
 
+#include <grima_http.h>
 #include <libpq-fe.h>
 
-#include "../http/server.h"
 #include "database.h"
 
 typedef struct app_context {

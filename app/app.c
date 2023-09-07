@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <grima_http.h>
 #include <libpq-fe.h>
 #include <log.h>
 
-#include "../http/query.h"
 #include "app.h"
 #include "database.h"
 #include "modules/persons/interface/http/persons_count_handler.c"
