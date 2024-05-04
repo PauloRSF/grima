@@ -22,6 +22,7 @@ typedef struct request_context {
 struct iorequest {
   int event_type;
   int client_socket;
+  pthread_t thread;
 };
 
 #define EVENT_TYPE_ACCEPT_CONNECTION 0

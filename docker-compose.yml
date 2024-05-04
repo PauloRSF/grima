@@ -7,9 +7,12 @@ services:
     volumes:
       - .:/app
     ports:
-      - 3000:3000
+      - 3001:3001
+    command: "just valgrind"
+    tty: true
+    stdin_open: true
     environment:
-      - PORT=3000
+      - PORT=3001
       - DATABASE_URI=postgres://postgres:postgres@postgres:5432/grima_development
 
   postgres:

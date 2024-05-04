@@ -34,8 +34,8 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
                                &method_length, &path, &path_length,
                                &minor_version, parsed_headers, &num_headers, 0);
 
-  // if (pret == -1)
-  //   return NULL;
+  if (pret == -1)
+    return NULL;
 
   Request *request = calloc(1, sizeof(Request));
 
@@ -52,6 +52,12 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
   struct yuarel url;
 
   yuarel_parse(&url, fake_url_to_parse);
+
+  if (url.path == NULL) {
+    free(fake_url_to_parse);
+    free(request);
+    return NULL;
+  }
 
   request->path = malloc(strlen(url.path) + 2);
   strcpy(request->path, "/");

@@ -1,5 +1,5 @@
-#ifndef GRIMA_SHARED_KERNEL_ERROR_H
-#define GRIMA_SHARED_KERNEL_ERROR_H
+#ifndef GRIMA_SHARED_ERROR_H
+#define GRIMA_SHARED_ERROR_H
 
 #include <string_list.h>
 

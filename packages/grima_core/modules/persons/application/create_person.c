@@ -12,8 +12,8 @@
 #include <uuid/uuid.h>
 
 #include "../../../database.h"
-#include "../../../shared_kernel/dates/date.h"
-#include "../../../shared_kernel/error/error.h"
+#include "../../../shared/dates/date.h"
+#include "../../../shared/error/error.h"
 #include "../domain/person.h"
 #include "../domain/person_repository.h"
 

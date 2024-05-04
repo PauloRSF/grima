@@ -3,7 +3,7 @@
 
 #include "../../../database.h"
 #include "../domain/person.h"
-#include "shared_kernel/shared_kernel.h"
+#include "shared/shared.h"
 
 Person *get_person_by_id_use_case(DatabaseContext *database_ctx,
                                   uuid_t person_id);

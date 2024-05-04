@@ -117,7 +117,7 @@ char *build_http_response_payload(Response *response) {
 }
 
 void free_response(Response *response) {
-  free(response->body);
+  // free(response->body);
   free_headers(response->headers);
   free(response);
 }

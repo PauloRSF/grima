@@ -5,7 +5,7 @@
 #include <string_list.h>
 #include <uuid/uuid.h>
 
-#include "../../../shared_kernel/dates/date.h"
+#include "../../../shared/dates/date.h"
 #include "person.h"
 
 Person *create_person(uuid_t id, char *name, char *nickname, Date date_of_birth,

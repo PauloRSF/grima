@@ -6,7 +6,7 @@
 #include <string_list.h>
 #include <uuid/uuid.h>
 
-#include "../../../shared_kernel/dates/date.h"
+#include "../../../shared/dates/date.h"
 #include "../domain/person.h"
 
 cJSON *person_to_json_object(Person *person) {

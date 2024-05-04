@@ -2,6 +2,6 @@
 #define GRIMA_CORE_H
 
 #include "modules/persons/persons.h"
-#include "shared_kernel/shared_kernel.h"
+#include "shared/shared.h"
 
 #endif
