@@ -14,6 +14,7 @@ typedef struct request {
   struct hashmap *query;
   struct hashmap *headers;
   char *body;
+  int remote_socket;
 } Request;
 
 char *get_method_name(Method method);

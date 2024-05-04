@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include "../../../shared/dates/date.h"
-#include "article.h"
+#include "../articles.h"
 
-Person *create_article(char* slug, char *title, char *description) {
+Article *create_article(char* slug, char *title, char *description) {
   Article *article = (Article *)calloc(1, sizeof(Article));
 
   article->slug = calloc(1, strlen(slug) + 1);
@@ -34,4 +34,12 @@ void free_article(Article *article) {
     free(article->description);
 
   free(article);
+}
+
+void free_find_articles_result(FindArticlesResult result) {
+  for (int i = 0; i < result.count; ++i) {
+    free_article(result.articles[i]);
+  }
+
+  free(result.articles);
 }

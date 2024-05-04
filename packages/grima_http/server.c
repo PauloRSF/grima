@@ -93,7 +93,7 @@ void request_read_request(ServerContext *ctx, int client_descriptor) {
   io_uring_submit(ctx->ring);
 }
 
-void send_response(ServerContext *server_ctx, RequestContext *request_ctx,
+void send_response(ServerContext *server_ctx, Request *request,
                    Response *response) {
   // struct io_uring_sqe *sqe = io_uring_get_sqe(server_ctx->ring);
 
@@ -102,7 +102,7 @@ void send_response(ServerContext *server_ctx, RequestContext *request_ctx,
   // io_uring_prep_write(sqe, request_ctx->client_socket_descriptor,
   //                     response_payload, strlen(response_payload), 0);
 
-  write(request_ctx->client_socket_descriptor, response_payload,
+  write(request->remote_socket, response_payload,
         strlen(response_payload));
 
   // struct iorequest *req = malloc(sizeof(struct iorequest *));
@@ -179,12 +179,11 @@ void *handle_request_worker(void *arg) {
         parse_request(client_buffers[args[id]->client_socket], bytes_read);
 
     if (request != NULL) {
+      request->remote_socket = args[id]->client_socket;
+
       Response *response = create_response();
 
-      args[id]->handle_request(args[id]->server_ctx,
-                               &(RequestContext){.client_socket_descriptor =
-                                                     args[id]->client_socket},
-                               request, response);
+      args[id]->handle_request(args[id]->server_ctx, request, response);
 
       free_request(request);
       free_response(response);

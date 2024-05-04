@@ -8,23 +8,22 @@
 
 #include "app.h"
 #include "database.h"
-#include "modules/persons/persons_count_handler.c"
-#include "modules/persons/persons_handler.c"
+#include "interface/http/articles_controller.h"
 
 AppContext app_ctx;
 
 void handle_ping_endpoint(ServerContext *server_ctx,
-                          RequestContext *request_ctx, Request *request,
+                          Request *request,
                           Response *response) {
   if (request->method != GET) {
     response->status_code = 405;
-    return send_response(server_ctx, request_ctx, response);
+    return send_response(server_ctx, request, response);
   }
 
   response->status_code = 200;
   response->body = "pong";
 
-  send_response(server_ctx, request_ctx, response);
+  send_response(server_ctx, request, response);
 }
 
 void log_request(Request *request) {
@@ -46,21 +45,18 @@ void log_response(Response *response) {
            get_status_text(response->status_code));
 }
 
-void handle_request(ServerContext *server_ctx, RequestContext *request_ctx,
-                    Request *request, Response *response) {
+void handle_request(ServerContext *server_ctx, Request *request, Response *response) {
   log_request(request);
 
   app_ctx.server_context = *server_ctx;
 
   if (MATCH_PATH(request->path, "/ping"))
-    handle_ping_endpoint(server_ctx, request_ctx, request, response);
-  else if (MATCH_PATH(request->path, "/pessoas"))
-    persons_handler(&app_ctx, request_ctx, request, response);
-  else if (MATCH_PATH(request->path, "/contagem-pessoas"))
-    persons_count_handler(&app_ctx, request_ctx, request, response);
+    handle_ping_endpoint(server_ctx, request, response);
+  else if (MATCH_PATH(request->path, "/articles"))
+    articles_controller(&app_ctx, request, response);
   else {
     response->status_code = 404;
-    send_response(server_ctx, request_ctx, response);
+    send_response(server_ctx, request, response);
   }
 
   log_response(response);

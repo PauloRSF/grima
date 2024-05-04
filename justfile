@@ -1,5 +1,5 @@
 output_file := `mktemp`
-source_files := `find -name '*.c' -not -path "./packages/grima_web/modules/persons/*" -type f -printf '%p '`
+source_files := `find -name '*.c' -type f -printf '%p '`
 compilation_flags := "-g -O3 -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Iapp -Ipackages/grima_http -Ipackages/grima_core -Ipackages/grima_web -DLOG_USE_COLOR"
 link_flags := "-lpq -luuid -luring"
 
