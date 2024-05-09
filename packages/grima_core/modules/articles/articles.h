@@ -9,7 +9,7 @@ typedef struct article {
   char *description;
 } Article;
 
-Article *create_article(char* slug, char *title, char *description);
+Article *create_article(char *title, char *description);
 
 void free_article(Article *article);
 

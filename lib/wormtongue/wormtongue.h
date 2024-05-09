@@ -1,5 +1,5 @@
-#ifndef GRIMA_HTTP_H
-#define GRIMA_HTTP_H
+#ifndef WORMTONGUE_H
+#define WORMTONGUE_H
 
 #include "headers.h"
 #include "query.h"

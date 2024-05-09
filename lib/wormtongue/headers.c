@@ -43,4 +43,8 @@ void add_header(Headers headers, char *key, char *value) {
   return StringMap_set(headers, key, value);
 }
 
+bool headers_iter(Headers headers, size_t *i, void **item) {
+  return StringMap_iter(headers, i, item);
+}
+
 void free_headers(Headers headers) { StringMap_free(headers); }

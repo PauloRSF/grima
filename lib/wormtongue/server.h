@@ -1,5 +1,5 @@
-#ifndef GRIMA_HTTP_SERVER_H
-#define GRIMA_HTTP_SERVER_H
+#ifndef WORMTONGUE_SERVER_H
+#define WORMTONGUE_SERVER_H
 
 #include <liburing.h>
 #include <netinet/in.h>
@@ -13,7 +13,7 @@
 typedef struct server_context {
   int server_descriptor;
   struct io_uring *ring;
-} ServerContext;
+} WormtongueServerContext;
 
 struct iorequest {
   int event_type;
@@ -25,17 +25,17 @@ struct iorequest {
 #define EVENT_TYPE_CLOSE_CONNECTION 1
 #define EVENT_TYPE_HANDLE_REQUEST 2
 
-typedef void (*RequestHandler)(ServerContext *server_ctx,
+typedef void (*RequestHandler)(WormtongueServerContext *server_ctx,
                                Request *request,
                                Response *response);
 
-ServerContext init_server(int port);
+WormtongueServerContext init_server(int port);
 
-void start_server(ServerContext *ctx, RequestHandler handle_request);
+void start_server(WormtongueServerContext *ctx, RequestHandler handle_request);
 
-void shutdown_server(ServerContext *ctx);
+void shutdown_server(WormtongueServerContext *ctx);
 
-void send_response(ServerContext *server_ctx, Request *request,
+void send_response(WormtongueServerContext *server_ctx, Request *request,
                    Response *response);
 
 #endif

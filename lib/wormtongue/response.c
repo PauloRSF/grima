@@ -78,7 +78,7 @@ char *build_http_response_payload(Response *response) {
 
   if (response->body != NULL) {
     char body_length_str[32];
-    sprintf(body_length_str, "%lu", strlen(response->body) + 4);
+    sprintf(body_length_str, "%lu", strlen(response->body));
     add_header(response->headers, "Content-Length", body_length_str);
   } else {
     add_header(response->headers, "Content-Length", "0");

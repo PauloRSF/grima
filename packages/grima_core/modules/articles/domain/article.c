@@ -1,20 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "../../../shared/dates/date.h"
 #include "../articles.h"
 
-Article *create_article(char* slug, char *title, char *description) {
-  Article *article = (Article *)calloc(1, sizeof(Article));
+char *slugify(char *text) {
+  char *slug = malloc(strlen(text) + 1);
 
-  article->slug = calloc(1, strlen(slug) + 1);
-  strcpy(article->slug, slug);
+  uint slug_index = 0;
 
-  article->title = calloc(1, strlen(title) + 1);
+  for (int i = 0; i < strlen(text); ++i) {
+    if (isspace(text[i]))
+      slug[slug_index++] = '-';
+    else if (isalnum(text[i]))
+      slug[slug_index++] = tolower(text[i]);
+  }
+
+  slug[slug_index] = '\0';
+
+  return realloc(slug, slug_index);
+}
+
+Article *create_article(char *title, char *description) {
+  Article *article = (Article *)malloc(sizeof(Article));
+
+  article->slug = slugify(title);
+
+  article->title = malloc(strlen(title) + 1);
   strcpy(article->title, title);
 
-  article->description = calloc(1, strlen(description) + 1);
+  article->description = malloc(strlen(description) + 1);
   strcpy(article->description, description);
 
   return article;

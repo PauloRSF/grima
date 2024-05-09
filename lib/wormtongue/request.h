@@ -1,6 +1,7 @@
-#ifndef GRIMA_HTTP_REQUEST_H
-#define GRIMA_HTTP_REQUEST_H
+#ifndef WORMTONGUE_REQUEST_H
+#define WORMTONGUE_REQUEST_H
 
+#include <uuid/uuid.h>
 #include <picohttpparser.h>
 
 typedef enum method {
@@ -15,6 +16,9 @@ typedef struct request {
   struct hashmap *headers;
   char *body;
   int remote_socket;
+  // UNIX timestamp with millissecond precision
+  unsigned long started_at;
+  uuid_t id;
 } Request;
 
 char *get_method_name(Method method);

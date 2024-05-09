@@ -1,5 +1,5 @@
-#ifndef GRIMA_HTTP_HEADERS_H
-#define GRIMA_HTTP_HEADERS_H
+#ifndef WORMTONGUE_HEADERS_H
+#define WORMTONGUE_HEADERS_H
 
 #include <hashmap.h>
 #include <string_map.h>
@@ -17,6 +17,8 @@ Headers create_headers();
 void add_header(Headers headers, char *key, char *value);
 
 char *get_header_value(Headers headers, char *key);
+
+bool headers_iter(Headers headers, size_t *i, void **item);
 
 void free_headers(Headers headers);
 

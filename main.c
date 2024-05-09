@@ -7,18 +7,17 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <grima_web.h>
-#include <log.h>
+#include <cpino.h>
 
-#define DEFAULT_PORT 3000
+#include <grima_app.h>
 
 AppContext ctx;
 
 void shutdown_handler(int signal) {
   if (signal == SIGSEGV) {
-    log_fatal("Shutting down due to segfault...");
+    cpino_log_fatal("Shutting down due to segfault...");
   } else {
-    log_info("Shutting down...");
+    cpino_log_info("Shutting down...");
   }
 
   shutdown_app(ctx);
@@ -32,11 +31,7 @@ int main(int argc, char **argv) {
   signal(SIGINT, shutdown_handler);
   signal(SIGSEGV, shutdown_handler);
 
-  char *port_env_var = getenv("PORT");
-
-  int port = port_env_var != NULL ? atoi(port_env_var) : DEFAULT_PORT;
-
-  start_app(port, &ctx);
+  start_app(&ctx);
 
   return 0;
 }

@@ -7,14 +7,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <log.h>
+#include <cpino.h>
 
 #include "headers.h"
 #include "request.h"
 #include "response.h"
 #include "server.h"
 
-void shutdown_server(ServerContext *ctx) {
+void shutdown_server(WormtongueServerContext *ctx) {
   // io_uring_queue_exit(ctx->ring);
   shutdown(ctx->server_descriptor, SHUT_RDWR);
 };
@@ -23,7 +23,7 @@ struct io_uring ring;
 
 char client_buffers[65536][CLIENT_RECEIVE_BUFFER_SIZE];
 
-ServerContext init_server(int port) {
+WormtongueServerContext init_server(int port) {
   int server_descriptor;
 
   struct sockaddr_in address = {.sin_family = AF_INET,
@@ -54,7 +54,7 @@ ServerContext init_server(int port) {
     exit(errno);
   }
 
-  ServerContext ctx = {.server_descriptor = server_descriptor};
+  WormtongueServerContext ctx = {.server_descriptor = server_descriptor};
 
   ctx.ring = &ring;
 
@@ -63,7 +63,7 @@ ServerContext init_server(int port) {
   return ctx;
 };
 
-void request_accept_connection(ServerContext *ctx) {
+void request_accept_connection(WormtongueServerContext *ctx) {
   struct io_uring_sqe *sqe = io_uring_get_sqe(ctx->ring);
 
   io_uring_prep_accept(sqe, ctx->server_descriptor, NULL, NULL, 0);
@@ -77,7 +77,7 @@ void request_accept_connection(ServerContext *ctx) {
   io_uring_submit(ctx->ring);
 }
 
-void request_read_request(ServerContext *ctx, int client_descriptor) {
+void request_read_request(WormtongueServerContext *ctx, int client_descriptor) {
   struct io_uring_sqe *sqe = io_uring_get_sqe(ctx->ring);
 
   io_uring_prep_read(sqe, client_descriptor, client_buffers[client_descriptor],
@@ -93,7 +93,7 @@ void request_read_request(ServerContext *ctx, int client_descriptor) {
   io_uring_submit(ctx->ring);
 }
 
-void send_response(ServerContext *server_ctx, Request *request,
+void send_response(WormtongueServerContext *server_ctx, Request *request,
                    Response *response) {
   // struct io_uring_sqe *sqe = io_uring_get_sqe(server_ctx->ring);
 
@@ -122,7 +122,7 @@ pthread_t threads[16];
 
 struct worker_thread_args {
   int client_socket;
-  ServerContext *server_ctx;
+  WormtongueServerContext *server_ctx;
   RequestHandler handle_request;
 };
 
@@ -163,12 +163,12 @@ struct worker_thread_init_data {
 void *handle_request_worker(void *arg) {
   int id = ((struct worker_thread_init_data *)arg)->id;
 
-  log_debug("Thread %d initialized", id);
+  cpino_log_debug("Thread %d initialized", id);
 
   while (true) {
     pthread_cond_wait(&cvs[id], &mps[id]);
 
-    log_debug("Serving client in socket %d in thread %d",
+    cpino_log_debug("Serving client in socket %d in thread %d",
               args[id]->client_socket, id);
 
     int bytes_read =
@@ -198,9 +198,9 @@ void *handle_request_worker(void *arg) {
 
 struct worker_thread_args zxc[NUM];
 
-void start_server(ServerContext *ctx, RequestHandler handle_request) {
+void start_server(WormtongueServerContext *ctx, RequestHandler handle_request) {
   for (int i = 0; i < NUM; ++i) {
-    log_debug("Initializing thread %d", i);
+    cpino_log_debug("Initializing thread %d", i);
 
     pthread_cond_init(&cvs[i], NULL);
 
@@ -208,14 +208,14 @@ void start_server(ServerContext *ctx, RequestHandler handle_request) {
                    &(struct worker_thread_init_data){.id = i});
   }
 
-  log_debug("%d threads initialized", NUM);
+  cpino_log_debug("%d threads initialized", NUM);
 
   size_t serving_thread_index = 0;
 
   while (true) {
     int client_socket = accept(ctx->server_descriptor, NULL, NULL);
 
-    log_debug("Accepted client connection in socket %d", client_socket);
+    cpino_log_debug("Accepted client connection in socket %d", client_socket);
 
     while (args[serving_thread_index] != NULL)
       serving_thread_index = (serving_thread_index + 1) % NUM;

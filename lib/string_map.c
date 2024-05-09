@@ -50,4 +50,8 @@ void StringMap_set(StringMap map, char *key, char *value) {
   hashmap_set(map, &entry);
 }
 
+bool StringMap_iter(StringMap map, size_t *i, void **item) {
+  return hashmap_iter(map, i, item);
+}
+
 void StringMap_free(StringMap map) { hashmap_free(map); }

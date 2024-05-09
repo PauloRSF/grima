@@ -5,6 +5,7 @@
 #include <picohttpparser.h>
 #include <string_map.h>
 #include <yuarel.h>
+#include <time.h>
 
 #include "headers.h"
 #include "request.h"
@@ -23,6 +24,22 @@ Method get_method_by_name(char *method_name) {
   return GET;
 }
 
+unsigned long get_current_time_in_millis() {
+  struct timespec current_time_spec;
+
+  clock_gettime(CLOCK_REALTIME, &current_time_spec);
+
+  unsigned long current_time_millis = current_time_spec.tv_sec * 1000000;
+
+  current_time_millis += current_time_spec.tv_nsec / 1000;
+
+  if (current_time_spec.tv_nsec % 1000 >= 500) {
+    ++current_time_millis;
+  }
+
+  return current_time_millis / 1000;
+}
+
 Request *parse_request(char *raw_request, size_t raw_request_length) {
   struct phr_header parsed_headers[100];
   const char *method = NULL, *path = NULL;
@@ -38,6 +55,8 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
     return NULL;
 
   Request *request = calloc(1, sizeof(Request));
+
+  request->started_at = get_current_time_in_millis();
 
   char method_str[method_length + 1];
   memset(method_str, '\0', method_length + 1);
@@ -104,6 +123,8 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
   strcpy(request->body, raw_request_body);
 
   free(fake_url_to_parse);
+
+  uuid_generate(request->id);
 
   return request;
 }

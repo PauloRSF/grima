@@ -3,8 +3,8 @@
 #include <string.h>
 
 #include <grima_core.h>
+#include <grima_app.h>
 
-#include "../../app.h"
 #include "article_mapper.h"
 
 void find_articles_handler(AppContext *app_ctx, Request *request, Response *response) {

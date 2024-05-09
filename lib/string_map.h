@@ -18,6 +18,8 @@ char *StringMap_get(StringMap string_map, char *key);
 
 void StringMap_set(StringMap string_map, char *key, char *value);
 
+bool StringMap_iter(StringMap string_map, size_t *i, void **item);
+
 void StringMap_free(StringMap string_map);
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef GRIMA_HTTP_RESPONSE_H
-#define GRIMA_HTTP_RESPONSE_H
+#ifndef WORMTONGUE_RESPONSE_H
+#define WORMTONGUE_RESPONSE_H
 
 #include "headers.h"
 

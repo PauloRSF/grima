@@ -1,5 +1,5 @@
-#ifndef GRIMA_HTTP_QUERY_H
-#define GRIMA_HTTP_QUERY_H
+#ifndef WORMTONGUE_QUERY_H
+#define WORMTONGUE_QUERY_H
 
 #include <string_map.h>
 

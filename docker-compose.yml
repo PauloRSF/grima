@@ -1,14 +1,12 @@
-version: "3.8"
-
 services:
   app:
-    image: grima
+    build: .
     restart: on-failure
     volumes:
       - .:/app
     ports:
       - 3001:3001
-    command: "just valgrind"
+    command: "just dev"
     tty: true
     stdin_open: true
     environment:

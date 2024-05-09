@@ -11,7 +11,9 @@ FindArticlesResult find_articles() {
   result.count = 1;
   result.articles = malloc(sizeof(Article));
 
-  Article *article = create_article("foo", "bar", "baz");
+  Article *article = create_article("A blog post", "This is a blog post written by me");
 
   result.articles[0] = article;
+
+  return result;
 }
