@@ -2,19 +2,13 @@
 lib
 
 -I
-lib/wormtongue
-
--I
 vendor
 
 -I
 /usr/include/postgresql
 
 -I
-packages/grima_core
-
--I
-packages/grima_app
+include
 
 -lpq
 

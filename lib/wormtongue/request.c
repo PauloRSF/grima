@@ -85,7 +85,7 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
   struct yuarel_param query_params[3];
 
   int parsed_query_params_count =
-      yuarel_parse_query(url.query, '&', query_params, 2);
+      yuarel_parse_query(url.query, '&', query_params, 255);
 
   request->query = parsed_query_params_count > 0 ? StringMap_new() : NULL;
 

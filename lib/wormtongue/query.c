@@ -35,3 +35,7 @@ char *get_query_string(StringMap query_params) {
 
   return query_string;
 }
+
+char *get_query_param_value(StringMap query_params, char *key) {
+  return StringMap_get(query_params, key);
+}

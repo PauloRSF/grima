@@ -5,4 +5,6 @@
 
 char *get_query_string(StringMap query_params);
 
+char *get_query_param_value(StringMap query_params, char *key);
+
 #endif

@@ -1,6 +1,6 @@
 output_file := `mktemp`
 source_files := `find -name '*.c' -type f -printf '%p '`
-compilation_flags := "-g -O3 -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Ilib/wormtongue -Ivendor -Ipackages/grima_core -Ipackages/grima_app -DLOG_USE_COLOR"
+compilation_flags := "-g -O3 -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Ivendor -Igrima -Iinclude"
 link_flags := "-lpq -luuid -luring"
 
 dev:

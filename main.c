@@ -9,7 +9,7 @@
 
 #include <cpino.h>
 
-#include <grima_app.h>
+#include <grima/app.h>
 
 AppContext ctx;
 

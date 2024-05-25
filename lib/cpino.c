@@ -14,37 +14,43 @@ static const char *log_level_strings[] = {"TRACE", "DEBUG", "INFO",
 
 static const unsigned short int log_levels[] = {10, 20, 30, 40, 50, 60};
 
-unsigned long get_log_timestamp() {
-  struct timespec current_time_spec;
+unsigned long get_current_timestamp() {
+  struct timespec ts;
+  timespec_get(&ts, TIME_UTC);
 
-  clock_gettime(CLOCK_REALTIME, &current_time_spec);
+  return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
 
-  unsigned long current_time_millis = current_time_spec.tv_sec * 1000000;
+char* build_default_log_string(unsigned short int level, char* message) {
+  const char* level_string = log_level_strings[level];
 
-  current_time_millis += current_time_spec.tv_nsec / 1000;
+  unsigned long timestamp = get_current_timestamp();
 
-  if (current_time_spec.tv_nsec % 1000 >= 500) {
-    ++current_time_millis;
-  }
+  int pid = getpid();
 
-  return current_time_millis / 1000;
+  char* default_log_string_format = "{\"level\":\"%s\",\"time\":%lu,\"pid\":%d,\"msg\":\"%s\"}";
+
+  int default_log_string_length = snprintf(NULL, 0, default_log_string_format, level_string, timestamp, 4242, message);
+
+  char* default_log_string = malloc(default_log_string_length + 1);
+
+  sprintf(default_log_string, default_log_string_format, level_string, timestamp, pid, message);
+
+  return default_log_string;
+}
+
+char *concat_json_strings(char *json1, char *json2) {
+  char *concatenated_json = calloc(1, strlen(json1) + strlen(json2) + 1);
+
+  strncpy(concatenated_json, json1, strlen(json1) - 1);
+  strcat(concatenated_json, ",");
+  strncat(concatenated_json, json2 + 1, strlen(json2));
+
+  return concatenated_json;
 }
 
 void cpino_log_with_context(unsigned short int level, cJSON *context, const char *fmt, ...) {
-  cJSON *log_json = cJSON_CreateObject();
-
-  cJSON_AddStringToObject(log_json, "level", log_level_strings[level]);
-
-  cJSON_AddNumberToObject(log_json, "time", get_log_timestamp());
-
-  cJSON_AddNumberToObject(log_json, "pid", getpid());
-
-  // I need to iterate over the arguments twice because i need to calculate
-  // the message size beforehand
   va_list arg_list;
-  va_list arg_list_copy;
-
-  va_copy(arg_list_copy, arg_list);
 
   va_start(arg_list, fmt);
   int message_size = vsnprintf(NULL, 0, fmt, arg_list);
@@ -52,25 +58,18 @@ void cpino_log_with_context(unsigned short int level, cJSON *context, const char
 
   char *message = malloc(message_size + 1);
 
-  va_start(arg_list_copy, fmt);
-  vsprintf(message, fmt, arg_list_copy);
-  va_end(arg_list_copy);
+  va_start(arg_list, fmt);
+  vsprintf(message, fmt, arg_list);
+  va_end(arg_list);
 
-  cJSON_AddStringToObject(log_json, "msg", message);
+  char* default_log_string = build_default_log_string(level, message);
 
   free(message);
-
-  char* default_log_string = cJSON_PrintUnformatted(log_json);
 
   if(context) {
     char* context_string = cJSON_PrintUnformatted(context);
 
-    char* log_string_with_context = calloc(1, strlen(default_log_string) + strlen(context_string));
-
-    // Disgusting way of combining two JSONs
-    strncpy(log_string_with_context, default_log_string, strlen(default_log_string) - 1);
-    strcat(log_string_with_context, ",");
-    strncat(log_string_with_context, context_string + 1, strlen(context_string));
+    char* log_string_with_context = concat_json_strings(default_log_string, context_string);
 
     printf("%s\n", log_string_with_context);
 
@@ -80,6 +79,5 @@ void cpino_log_with_context(unsigned short int level, cJSON *context, const char
     printf("%s\n", default_log_string);
   }
 
-  cJSON_Delete(log_json);
   free(default_log_string);
 }
