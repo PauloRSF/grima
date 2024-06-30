@@ -7,28 +7,20 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <cpino.h>
-
 #include "headers.h"
 #include "request.h"
 #include "response.h"
 #include "server.h"
 
-void shutdown_server(WormtongueServerContext *ctx) {
-  // io_uring_queue_exit(ctx->ring);
-  shutdown(ctx->server_descriptor, SHUT_RDWR);
-};
-
-struct io_uring ring;
+void shutdown_server(WormtongueServerContext *ctx) { shutdown(ctx->server_descriptor, SHUT_RDWR); };
 
 char client_buffers[65536][CLIENT_RECEIVE_BUFFER_SIZE];
 
-WormtongueServerContext init_server(int port) {
+WormtongueServerContext setup_server(int port, Logger logger) {
   int server_descriptor;
 
-  struct sockaddr_in address = {.sin_family = AF_INET,
-                                .sin_addr = {.s_addr = INADDR_ANY},
-                                .sin_port = htons(port)};
+  struct sockaddr_in address = {
+      .sin_family = AF_INET, .sin_addr = {.s_addr = INADDR_ANY}, .sin_port = htons(port)};
 
   socklen_t address_size = sizeof(address);
 
@@ -39,8 +31,7 @@ WormtongueServerContext init_server(int port) {
     exit(errno);
   }
 
-  int bind_result =
-      bind(server_descriptor, (struct sockaddr *)&address, address_size);
+  int bind_result = bind(server_descriptor, (struct sockaddr *)&address, address_size);
 
   if (bind_result == -1) {
     perror("Could not bind server socket");
@@ -54,66 +45,15 @@ WormtongueServerContext init_server(int port) {
     exit(errno);
   }
 
-  WormtongueServerContext ctx = {.server_descriptor = server_descriptor};
-
-  ctx.ring = &ring;
-
-  io_uring_queue_init(256, ctx.ring, 0);
+  WormtongueServerContext ctx = {.server_descriptor = server_descriptor, .logger = logger};
 
   return ctx;
 };
 
-void request_accept_connection(WormtongueServerContext *ctx) {
-  struct io_uring_sqe *sqe = io_uring_get_sqe(ctx->ring);
-
-  io_uring_prep_accept(sqe, ctx->server_descriptor, NULL, NULL, 0);
-
-  struct iorequest *req = malloc(sizeof(struct iorequest *));
-
-  req->event_type = EVENT_TYPE_ACCEPT_CONNECTION;
-
-  io_uring_sqe_set_data(sqe, req);
-
-  io_uring_submit(ctx->ring);
-}
-
-void request_read_request(WormtongueServerContext *ctx, int client_descriptor) {
-  struct io_uring_sqe *sqe = io_uring_get_sqe(ctx->ring);
-
-  io_uring_prep_read(sqe, client_descriptor, client_buffers[client_descriptor],
-                     CLIENT_RECEIVE_BUFFER_SIZE, 0);
-
-  struct iorequest *req = malloc(sizeof(struct iorequest *));
-
-  req->event_type = EVENT_TYPE_HANDLE_REQUEST;
-  req->client_socket = client_descriptor;
-
-  io_uring_sqe_set_data(sqe, req);
-
-  io_uring_submit(ctx->ring);
-}
-
-void send_response(WormtongueServerContext *server_ctx, Request *request,
-                   Response *response) {
-  // struct io_uring_sqe *sqe = io_uring_get_sqe(server_ctx->ring);
-
+void send_response(WormtongueServerContext *server_ctx, Request *request, Response *response) {
   char *response_payload = build_http_response_payload(response);
 
-  // io_uring_prep_write(sqe, request_ctx->client_socket_descriptor,
-  //                     response_payload, strlen(response_payload), 0);
-
-  write(request->remote_socket, response_payload,
-        strlen(response_payload));
-
-  // struct iorequest *req = malloc(sizeof(struct iorequest *));
-
-  // req->event_type = EVENT_TYPE_CLOSE_CONNECTION;
-  // req->client_socket = request_ctx->client_socket_descriptor;
-  // req->thread = request_ctx->thread;
-
-  // io_uring_sqe_set_data(sqe, req);
-
-  // io_uring_submit(server_ctx->ring);
+  write(request->remote_socket, response_payload, strlen(response_payload));
 
   free(response_payload);
 };
@@ -125,29 +65,6 @@ struct worker_thread_args {
   WormtongueServerContext *server_ctx;
   RequestHandler handle_request;
 };
-
-// void *abc(void *param) {
-//   printf("inside thread\n");
-//   fflush(stdout);
-
-//   struct qwe *asd = (struct qwe *)param;
-
-//   Request *request =
-//       parse_request(client_buffers[asd->client_socket], asd->bts);
-
-//   Response *response = create_response();
-
-//   asd->handle_request(
-//       asd->server_ctx,
-//       &(RequestContext){.client_socket_descriptor = asd->client_socket,
-//                         .thread = asd->thread},
-//       request, response);
-
-//   free_request(request);
-//   free_response(response);
-
-//   return NULL;
-// }
 
 #define NUM 1
 
@@ -163,21 +80,19 @@ struct worker_thread_init_data {
 void *handle_request_worker(void *arg) {
   int id = ((struct worker_thread_init_data *)arg)->id;
 
-  cpino_log_debug("Thread %d initialized", id);
+  printf("Thread %d initialized\n", id);
 
   while (true) {
     pthread_cond_wait(&cvs[id], &mps[id]);
 
-    cpino_log_debug("Serving client in socket %d in thread %d",
-              args[id]->client_socket, id);
+    printf("Serving client in socket %d in thread %d\n", args[id]->client_socket, id);
 
-    int bytes_read =
-        read(args[id]->client_socket, client_buffers[args[id]->client_socket],
-             CLIENT_RECEIVE_BUFFER_SIZE);
+    int bytes_read = read(args[id]->client_socket, client_buffers[args[id]->client_socket],
+                          CLIENT_RECEIVE_BUFFER_SIZE);
 
-    Request *request =
-        parse_request(client_buffers[args[id]->client_socket], bytes_read);
+    Request *request = parse_request(client_buffers[args[id]->client_socket], bytes_read);
 
+    // Bad request if == NULL
     if (request != NULL) {
       request->remote_socket = args[id]->client_socket;
 
@@ -198,101 +113,80 @@ void *handle_request_worker(void *arg) {
 
 struct worker_thread_args zxc[NUM];
 
-void start_server(WormtongueServerContext *ctx, RequestHandler handle_request) {
+void initialize_worker_threads(WormtongueServerContext *ctx) {
   for (int i = 0; i < NUM; ++i) {
-    cpino_log_debug("Initializing thread %d", i);
+    ctx->logger("Initializing thread %d\n", i);
 
     pthread_cond_init(&cvs[i], NULL);
 
-    pthread_create(&threads[i], NULL, handle_request_worker,
-                   &(struct worker_thread_init_data){.id = i});
+    struct worker_thread_init_data *init_data = malloc(sizeof(struct worker_thread_init_data));
+    init_data->id = i;
+
+    pthread_create(&threads[i], NULL, handle_request_worker, init_data);
   }
 
-  cpino_log_debug("%d threads initialized", NUM);
+  ctx->logger("%d threads initialized\n", NUM);
+}
+
+size_t serving_thread_index = 0;
+
+void wait_for_new_connections(WormtongueServerContext *ctx, RequestHandler handle_request) {
+  int client_socket = accept(ctx->server_descriptor, NULL, NULL);
+
+  // TODO: handle this properly
+  if (client_socket == -1) {
+    perror("Could not accept client connection");
+    return;
+  }
+
+  ctx->logger("Accepted client connection in socket %d\n", client_socket);
+
+  while (args[serving_thread_index] != NULL)
+    serving_thread_index = (serving_thread_index + 1) % NUM;
+
+  zxc[serving_thread_index].client_socket = client_socket;
+  zxc[serving_thread_index].server_ctx = ctx;
+  zxc[serving_thread_index].handle_request = handle_request;
+
+  args[serving_thread_index] = &zxc[serving_thread_index];
+
+  pthread_cond_signal(&cvs[serving_thread_index]);
+}
+
+struct connection_worker_args {
+  WormtongueServerContext *server_ctx;
+  RequestHandler handle_request;
+};
+
+void *handle_connection_worker(void *arg) {
+  struct connection_worker_args *args = (struct connection_worker_args *)arg;
 
   size_t serving_thread_index = 0;
 
-  while (true) {
-    int client_socket = accept(ctx->server_descriptor, NULL, NULL);
+  args->server_ctx->logger("Connection thread initialized\n");
 
-    cpino_log_debug("Accepted client connection in socket %d", client_socket);
+  while (true)
+    wait_for_new_connections(args->server_ctx, args->handle_request);
 
-    while (args[serving_thread_index] != NULL)
-      serving_thread_index = (serving_thread_index + 1) % NUM;
+  return NULL;
+}
 
-    zxc[serving_thread_index].client_socket = client_socket;
-    zxc[serving_thread_index].server_ctx = ctx;
-    zxc[serving_thread_index].handle_request = handle_request;
+void initialize_connection_thread(WormtongueServerContext *ctx, RequestHandler handle_request) {
+  pthread_t connection_thread;
 
-    args[serving_thread_index] = &zxc[serving_thread_index];
+  struct connection_worker_args *args = malloc(sizeof(struct connection_worker_args));
+  args->server_ctx = ctx;
+  args->handle_request = handle_request;
 
-    pthread_cond_signal(&cvs[serving_thread_index]);
-  }
+  pthread_create(&connection_thread, NULL, handle_connection_worker, args);
+}
 
-  // struct io_uring_cqe *cqe;
+void start_server(WormtongueServerContext *ctx, RequestHandler handle_request, bool blocking) {
+  initialize_worker_threads(ctx);
 
-  // request_accept_connection(ctx);
+  if (!blocking)
+    return initialize_connection_thread(ctx, handle_request);
 
-  // while (1) {
-  //   printf("before io wait\n");
-  //   // pthread_join(threads[i - 1], NULL);
-  //   sleep(1);
-  //   int ret = io_uring_wait_cqe(ctx->ring, &cqe);
-  //   printf("after io wait\n");
-
-  //   struct iorequest *req = (struct iorequest *)cqe->user_data;
-
-  //   if (ret < 0) {
-  //     perror("io_uring_wait_cqe");
-  //     exit(1);
-  //   }
-
-  //   if (cqe->res < 0) {
-  //     fprintf(stderr, "Async request failed: %s for event: %d\n",
-  //             strerror(-cqe->res), req->event_type);
-  //   }
-
-  //   switch (req->event_type) {
-  //   case EVENT_TYPE_ACCEPT_CONNECTION:
-  //     request_accept_connection(ctx);
-
-  //     request_read_request(ctx, cqe->res);
-
-  //     free(req);
-
-  //     break;
-  //   case EVENT_TYPE_HANDLE_REQUEST:
-  //     if (cqe->res > 0) {
-  //       asd.client_socket = req->client_socket;
-  //       asd.server_ctx = ctx;
-  //       asd.bts = cqe->res;
-  //       asd.handle_request = handle_request;
-  //       asd.thread = threads[i];
-
-  //       printf("inside handle event\n");
-
-  //       // pthread_attr_init(&attr);
-  //       // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-  //       int alo = pthread_create(&threads[i], NULL, abc, (void *)&asd);
-
-  //       ++i;
-  //       printf("%d pthread return\n", alo);
-  //       // sleep(1);
-  //       // pthread_join(thread, NULL);
-  //     }
-
-  //     free(req);
-
-  //     break;
-  //   case EVENT_TYPE_CLOSE_CONNECTION:
-  //     pthread_join(req->thread, NULL);
-  //     close(req->client_socket);
-
-  //     free(req);
-
-  //     break;
-  //   }
-
-  //   io_uring_cqe_seen(ctx->ring, cqe);
-  // }
+  while (true)
+    wait_for_new_connections(ctx, handle_request);
 }

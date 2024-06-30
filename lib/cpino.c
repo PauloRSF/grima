@@ -1,16 +1,15 @@
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <cJSON.h>
 
 #include "cpino.h"
 
-static const char *log_level_strings[] = {"TRACE", "DEBUG", "INFO",
-                                          "WARN",  "ERROR", "FATAL"};
+static const char *log_level_strings[] = {"TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"};
 
 static const unsigned short int log_levels[] = {10, 20, 30, 40, 50, 60};
 
@@ -21,18 +20,19 @@ unsigned long get_current_timestamp() {
   return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
-char* build_default_log_string(unsigned short int level, char* message) {
-  const char* level_string = log_level_strings[level];
+char *build_default_log_string(unsigned short int level, char *message) {
+  const char *level_string = log_level_strings[level];
 
   unsigned long timestamp = get_current_timestamp();
 
   int pid = getpid();
 
-  char* default_log_string_format = "{\"level\":\"%s\",\"time\":%lu,\"pid\":%d,\"msg\":\"%s\"}";
+  char *default_log_string_format = "{\"level\":\"%s\",\"time\":%lu,\"pid\":%d,\"msg\":\"%s\"}";
 
-  int default_log_string_length = snprintf(NULL, 0, default_log_string_format, level_string, timestamp, 4242, message);
+  int default_log_string_length =
+      snprintf(NULL, 0, default_log_string_format, level_string, timestamp, 4242, message);
 
-  char* default_log_string = malloc(default_log_string_length + 1);
+  char *default_log_string = malloc(default_log_string_length + 1);
 
   sprintf(default_log_string, default_log_string_format, level_string, timestamp, pid, message);
 
@@ -62,14 +62,18 @@ void cpino_log_with_context(unsigned short int level, cJSON *context, const char
   vsprintf(message, fmt, arg_list);
   va_end(arg_list);
 
-  char* default_log_string = build_default_log_string(level, message);
+  if (message[message_size - 1] == '\n') {
+    message[message_size - 1] = '\0';
+  }
+
+  char *default_log_string = build_default_log_string(level, message);
 
   free(message);
 
-  if(context) {
-    char* context_string = cJSON_PrintUnformatted(context);
+  if (context) {
+    char *context_string = cJSON_PrintUnformatted(context);
 
-    char* log_string_with_context = concat_json_strings(default_log_string, context_string);
+    char *log_string_with_context = concat_json_strings(default_log_string, context_string);
 
     printf("%s\n", log_string_with_context);
 

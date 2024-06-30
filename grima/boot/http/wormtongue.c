@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +11,6 @@
 #include <grima/app.h>
 
 #include "http.h"
-#include "../../articles/interface/http/articles_controller.h"
 
 char *get_request_path_with_query(Request *request) {
   char *path = malloc(strlen(request->path) + 1);
@@ -45,8 +45,9 @@ cJSON *get_headers_json(Headers headers) {
 }
 
 bool route_supports_method(Route route, Method method) {
-  for(int i = 0; route.methods[i] != -1; i++) {
-    if (method == route.methods[i]) return true;
+  for (int i = 0; route.methods[i] != -1; i++) {
+    if (method == route.methods[i])
+      return true;
   }
 
   return false;
@@ -116,11 +117,7 @@ void ping_controller(AppContext *app_ctx, Request *request, Response *response) 
   send_response(&app_ctx->server_context, request, response);
 }
 
-Route routes[] = {
-  {"/ping", (Method[]){GET, -1}, ping_controller},
-  {"/articles", (Method[]){GET, -1}, articles_controller},
-  {NULL, NULL, NULL}
-};
+Route routes[] = {{"/ping", (Method[]){GET, -1}, ping_controller}, {NULL, NULL, NULL}};
 
 AppContext *app_ctx1;
 
@@ -129,9 +126,9 @@ void router(WormtongueServerContext *server_ctx, Request *request, Response *res
 
   app_ctx1->server_context = *server_ctx;
 
-  for(int i = 0; routes[i].path != NULL; i++) {
+  for (int i = 0; routes[i].path != NULL; i++) {
     if (MATCH_PATH(request->path, routes[i].path)) {
-      if(route_supports_method(routes[i], request->method)) {
+      if (route_supports_method(routes[i], request->method)) {
         routes[i].handler(app_ctx1, request, response);
       } else {
         response->status_code = 405;
@@ -145,18 +142,20 @@ void router(WormtongueServerContext *server_ctx, Request *request, Response *res
   log_response(request, response);
 }
 
-void start_http_server(AppContext *app_ctx) {
+bool start_http_server(AppContext *app_ctx) {
   char *port_env_var = getenv("PORT");
 
   int port = port_env_var != NULL ? atoi(port_env_var) : DEFAULT_PORT;
 
-  cpino_log_info("HTTP: Starting server");
+  cpino_log_info("[HTTP] Starting server");
 
-  app_ctx->server_context = init_server(port);
+  app_ctx->server_context = setup_server(port, &printf);
 
   app_ctx1 = app_ctx;
 
-  cpino_log_info("HTTP: Listening in port %d", port);
+  start_server(&app_ctx->server_context, router, false);
 
-  start_server(&app_ctx->server_context, router);
+  cpino_log_info("[HTTP] Listening in port %d", port);
+
+  return true;
 }

@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <string.h>
 
 #include <wormtongue/request.h>
@@ -10,9 +11,9 @@
   strncmp((request_path), (path), strlen((path))) == 0
 
 typedef struct route {
-  char* path;
-  Method* methods;
-  void (*handler)(AppContext*, Request*, Response*);
+  char *path;
+  Method *methods;
+  void (*handler)(AppContext *, Request *, Response *);
 } Route;
 
-void start_http_server(AppContext *app_ctx);
+bool start_http_server(AppContext *app_ctx);

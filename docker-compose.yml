@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    restart: on-failure
+    # restart: on-failure
     volumes:
       - .:/app
     ports:

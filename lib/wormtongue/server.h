@@ -1,7 +1,6 @@
 #ifndef WORMTONGUE_SERVER_H
 #define WORMTONGUE_SERVER_H
 
-#include <liburing.h>
 #include <netinet/in.h>
 
 #include "headers.h"
@@ -10,32 +9,24 @@
 
 #define CLIENT_RECEIVE_BUFFER_SIZE 2048
 
+typedef void (*Logger)(const char *format, ...);
+
 typedef struct server_context {
   int server_descriptor;
-  struct io_uring *ring;
+  Logger logger;
 } WormtongueServerContext;
 
-struct iorequest {
-  int event_type;
-  int client_socket;
-  pthread_t thread;
-};
-
-#define EVENT_TYPE_ACCEPT_CONNECTION 0
-#define EVENT_TYPE_CLOSE_CONNECTION 1
-#define EVENT_TYPE_HANDLE_REQUEST 2
-
-typedef void (*RequestHandler)(WormtongueServerContext *server_ctx,
-                               Request *request,
+typedef void (*RequestHandler)(WormtongueServerContext *ctx, Request *request,
                                Response *response);
 
-WormtongueServerContext init_server(int port);
+WormtongueServerContext setup_server(int port, Logger logger);
 
-void start_server(WormtongueServerContext *ctx, RequestHandler handle_request);
+void start_server(WormtongueServerContext *ctx, RequestHandler handle_request,
+                  bool blocking);
 
 void shutdown_server(WormtongueServerContext *ctx);
 
-void send_response(WormtongueServerContext *server_ctx, Request *request,
+void send_response(WormtongueServerContext *ctx, Request *request,
                    Response *response);
 
 #endif

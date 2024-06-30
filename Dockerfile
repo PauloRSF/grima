@@ -1,18 +1,10 @@
-FROM debian:12.1
+FROM debian:12.5
 
 WORKDIR /app
 
 RUN apt update
-RUN apt install -y git curl wget build-essential libpq5 libpq-dev uuid-dev valgrind liburing2 liburing-dev entr
+RUN apt install -y git curl wget build-essential libpq5 libpq-dev uuid-dev valgrind liburing2 liburing-dev libargon2-1 libargon2-dev libsodium23 libsodium-dev entr
 
-# RUN wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1>/dev/null
-# RUN echo "deb [arch=all,amd64 signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr bookworm" | tee /etc/apt/sources.list.d/prebuilt-mpr.list
-# RUN apt update -y
-# RUN apt install makedeb
-# RUN git clone https://mpr.makedeb.org/just
-# RUN cd just
-# RUN makedeb -si
-# RUN cd ..
 RUN curl --proto '=https' --tlsv1.2 -sSf -o rust.sh https://sh.rustup.rs
 RUN sh rust.sh -y
 

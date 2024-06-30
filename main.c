@@ -13,12 +13,21 @@
 
 AppContext ctx;
 
+bool is_dying = false;
+
 void shutdown_handler(int signal) {
   if (signal == SIGSEGV) {
     cpino_log_fatal("Shutting down due to segfault...");
   } else {
     cpino_log_info("Shutting down...");
   }
+
+  if (is_dying) {
+    cpino_log_fatal("Killing application due to previous shutdown signal");
+    exit(signal);
+  }
+
+  is_dying = true;
 
   shutdown_app(ctx);
 
