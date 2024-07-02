@@ -24,13 +24,11 @@ void free_element(void *item) {
 }
 
 StringMap StringMap_new() {
-  return hashmap_new(sizeof(StringMapEntry), 1, 0, 0, hash, compare,
-                     free_element, NULL);
+  return hashmap_new(sizeof(StringMapEntry), 1, 0, 0, hash, compare, free_element, NULL);
 }
 
 char *StringMap_get(StringMap map, char *key) {
-  StringMapEntry *entry =
-      (StringMapEntry *)hashmap_get(map, &(StringMapEntry){.key = key});
+  StringMapEntry *entry = (StringMapEntry *)hashmap_get(map, &(StringMapEntry){.key = key});
 
   if (entry == NULL)
     return NULL;
@@ -50,8 +48,6 @@ void StringMap_set(StringMap map, char *key, char *value) {
   hashmap_set(map, &entry);
 }
 
-bool StringMap_iter(StringMap map, size_t *i, void **item) {
-  return hashmap_iter(map, i, item);
-}
+bool StringMap_iter(StringMap map, size_t *i, void **item) { return hashmap_iter(map, i, item); }
 
 void StringMap_free(StringMap map) { hashmap_free(map); }

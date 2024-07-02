@@ -1,8 +1,8 @@
 #ifndef WORMTONGUE_HEADERS_H
 #define WORMTONGUE_HEADERS_H
 
+#include "string_map.h"
 #include <hashmap.h>
-#include <string_map.h>
 
 #define HTTP_VERSION "HTTP/1.1"
 

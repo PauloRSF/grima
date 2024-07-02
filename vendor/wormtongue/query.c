@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include <hashmap.h>
-#include <string_map.h>
 
 #include "headers.h"
+#include "string_map.h"
 
 char *get_query_string(StringMap query_params) {
   size_t index = 0, items_count = 0;

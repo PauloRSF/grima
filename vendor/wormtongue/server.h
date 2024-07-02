@@ -9,7 +9,7 @@
 
 #define CLIENT_RECEIVE_BUFFER_SIZE 2048
 
-typedef void (*Logger)(const char *format, ...);
+typedef void (*Logger)(const char *restrict format, ...);
 
 typedef struct server_context {
   int server_descriptor;

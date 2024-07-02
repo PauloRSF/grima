@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include <hashmap.h>
-#include <string_map.h>
 
 #include "headers.h"
+#include "string_map.h"
 
 char *get_headers_payload(Headers headers) {
   size_t index = 0;
@@ -35,9 +35,7 @@ char *get_headers_payload(Headers headers) {
 
 Headers create_headers() { return StringMap_new(); }
 
-char *get_header_value(Headers headers, char *key) {
-  return StringMap_get(headers, key);
-}
+char *get_header_value(Headers headers, char *key) { return StringMap_get(headers, key); }
 
 void add_header(Headers headers, char *key, char *value) {
   return StringMap_set(headers, key, value);

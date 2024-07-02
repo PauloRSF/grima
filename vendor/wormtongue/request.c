@@ -3,12 +3,12 @@
 #include <string.h>
 
 #include <picohttpparser.h>
-#include <string_map.h>
-#include <yuarel.h>
 #include <time.h>
+#include <yuarel.h>
 
 #include "headers.h"
 #include "request.h"
+#include "string_map.h"
 
 char *get_method_name(Method method) {
   char *methods[] = {"GET", "POST"};
@@ -24,20 +24,11 @@ Method get_method_by_name(char *method_name) {
   return GET;
 }
 
-unsigned long get_current_time_in_millis() {
-  struct timespec current_time_spec;
+unsigned long long get_current_time_in_millis() {
+  struct timespec ts;
+  timespec_get(&ts, TIME_UTC);
 
-  clock_gettime(CLOCK_REALTIME, &current_time_spec);
-
-  unsigned long current_time_millis = current_time_spec.tv_sec * 1000000;
-
-  current_time_millis += current_time_spec.tv_nsec / 1000;
-
-  if (current_time_spec.tv_nsec % 1000 >= 500) {
-    ++current_time_millis;
-  }
-
-  return current_time_millis / 1000;
+  return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
 Request *parse_request(char *raw_request, size_t raw_request_length) {
@@ -47,9 +38,8 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
       num_headers = sizeof(parsed_headers) / sizeof(parsed_headers[0]);
   int minor_version;
 
-  int pret = phr_parse_request(raw_request, raw_request_length, &method,
-                               &method_length, &path, &path_length,
-                               &minor_version, parsed_headers, &num_headers, 0);
+  int pret = phr_parse_request(raw_request, raw_request_length, &method, &method_length, &path,
+                               &path_length, &minor_version, parsed_headers, &num_headers, 0);
 
   if (pret == -1)
     return NULL;
@@ -84,8 +74,7 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
 
   struct yuarel_param query_params[3];
 
-  int parsed_query_params_count =
-      yuarel_parse_query(url.query, '&', query_params, 255);
+  int parsed_query_params_count = yuarel_parse_query(url.query, '&', query_params, 255);
 
   request->query = parsed_query_params_count > 0 ? StringMap_new() : NULL;
 
@@ -116,8 +105,7 @@ Request *parse_request(char *raw_request, size_t raw_request_length) {
 
   char *content_length = get_header_value(headers_map, "Content-Length");
 
-  int body_length =
-      content_length != NULL ? atoi(content_length) : strlen(raw_request_body);
+  int body_length = content_length != NULL ? atoi(content_length) : strlen(raw_request_body);
 
   request->body = malloc(body_length + 1);
   strcpy(request->body, raw_request_body);
