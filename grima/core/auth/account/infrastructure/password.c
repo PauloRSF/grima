@@ -6,19 +6,9 @@
 
 #include <grima/auth.h>
 
-uint8_t *Account_hash_password(char *password, uint8_t *salt) {
-  uint8_t *hash = calloc(PASSWORD_HASH_SIZE, sizeof(uint8_t));
+void Account_hash_password(char *plaintext_password, struct account_password *password) {
+  randombytes_buf(&password->salt, ACCOUNT_PASSWORD_SALT_SIZE);
 
-  argon2i_hash_raw(2, 1 << 16, 1, password, strlen(password), salt, PASSWORD_SALT_SIZE, hash,
-                   PASSWORD_HASH_SIZE);
-
-  return hash;
-}
-
-uint8_t *Account_generate_salt() {
-  uint8_t *salt = calloc(PASSWORD_SALT_SIZE, sizeof(uint8_t));
-
-  randombytes_buf(salt, PASSWORD_SALT_SIZE);
-
-  return salt;
+  argon2i_hash_raw(2, 1 << 16, 1, plaintext_password, strlen(plaintext_password), password->salt,
+                   ACCOUNT_PASSWORD_SALT_SIZE, &password->hash, ACCOUNT_PASSWORD_HASH_SIZE);
 }

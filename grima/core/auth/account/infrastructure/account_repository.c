@@ -8,9 +8,9 @@
 
 #include "../account.h"
 
-void AccountRepository_get_next_id(AccountId account_id) { uuid_generate(account_id); };
 
 #define ACCOUNT_PARAMS_COUNT 5
+void AccountRepository_get_next_id(account_id_t account_id) { uuid_generate(account_id); };
 
 struct account_params {
   const char *values[ACCOUNT_PARAMS_COUNT];
@@ -18,7 +18,7 @@ struct account_params {
   int formats[ACCOUNT_PARAMS_COUNT];
 };
 
-struct account_params build_account_params(Account *account) {
+struct account_params build_account_params(struct account *account) {
   struct account_params params = {
       .values = {0},
       .lengths = {0},
@@ -38,17 +38,17 @@ struct account_params build_account_params(Account *account) {
   params.formats[2] = 0;
 
   params.values[3] = account->password.salt;
-  params.lengths[3] = PASSWORD_SALT_SIZE;
+  params.lengths[3] = ACCOUNT_PASSWORD_SALT_SIZE;
   params.formats[3] = 1;
 
   params.values[4] = account->password.hash;
-  params.lengths[4] = PASSWORD_HASH_SIZE;
+  params.lengths[4] = ACCOUNT_PASSWORD_HASH_SIZE;
   params.formats[4] = 1;
 
   return params;
 }
 
-void AccountRepository_save(Account *account) {
+void AccountRepository_save(struct account *account) {
   PGconn *connection = get_database_connection();
 
   const char *query = "INSERT INTO accounts (id, email, username, password_salt, password_hash) "

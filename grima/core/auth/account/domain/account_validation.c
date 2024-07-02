@@ -8,13 +8,13 @@
 
 #include "../account.h"
 
-typedef struct validation_result {
+struct validation_result {
   bool is_valid;
   char *error_message;
-} ValidationResult;
+};
 
-ValidationResult validate_email(char *email) {
-  ValidationResult result = {.is_valid = true, .error_message = NULL};
+struct validation_result validate_email(char *email) {
+  struct validation_result result = {.is_valid = true, .error_message = NULL};
 
   if (email == NULL) {
     result.is_valid = false;
@@ -63,8 +63,8 @@ ValidationResult validate_email(char *email) {
   return result;
 }
 
-ValidationResult validate_username(char *username) {
-  ValidationResult result = {.is_valid = true, .error_message = NULL};
+struct validation_result validate_username(char *username) {
+  struct validation_result result = {.is_valid = true, .error_message = NULL};
 
   if (username == NULL) {
     result.is_valid = false;
@@ -106,14 +106,15 @@ ValidationResult validate_username(char *username) {
   return result;
 }
 
-typedef struct password_validation_result {
+struct password_validation_result {
   bool is_valid;
   size_t errors_count;
   char **error_messages;
-} PasswordValidationResult;
+};
 
-PasswordValidationResult validate_password(char *password) {
-  PasswordValidationResult result = {.is_valid = true, .errors_count = 0, .error_messages = NULL};
+struct password_validation_result validate_password(char *password) {
+  struct password_validation_result result = {
+      .is_valid = true, .errors_count = 0, .error_messages = NULL};
 
   if (password == NULL) {
     result.is_valid = false;
@@ -202,52 +203,53 @@ PasswordValidationResult validate_password(char *password) {
   return result;
 }
 
-AccountValidationResult Account_validate_data(char *email, char *username, char *password) {
+struct account_validation_result Account_validate_data(char *email, char *username,
+                                                       char *password) {
   size_t errors_count = 0;
-  AccountValidationError *errors = NULL;
+  struct account_validation_error *errors = NULL;
 
-  ValidationResult email_validation_result = validate_email(email);
+  struct validation_result email_validation_result = validate_email(email);
 
   if (!email_validation_result.is_valid) {
-    AccountValidationError email_error;
+    struct account_validation_error email_error;
 
     email_error.key = "email";
     email_error.message = email_validation_result.error_message;
 
     errors_count++;
-    errors = realloc(errors, errors_count * sizeof(AccountValidationError));
+    errors = realloc(errors, errors_count * sizeof(struct account_validation_error));
     errors[errors_count - 1] = email_error;
   }
 
-  ValidationResult username_validation_result = validate_username(username);
+  struct validation_result username_validation_result = validate_username(username);
 
   if (!username_validation_result.is_valid) {
-    AccountValidationError username_error;
+    struct account_validation_error username_error;
 
     username_error.key = "username";
     username_error.message = username_validation_result.error_message;
 
     errors_count++;
-    errors = realloc(errors, errors_count * sizeof(AccountValidationError));
+    errors = realloc(errors, errors_count * sizeof(struct account_validation_error));
     errors[errors_count - 1] = username_error;
   }
 
-  PasswordValidationResult password_validation_result = validate_password(password);
+  struct password_validation_result password_validation_result = validate_password(password);
 
   if (!password_validation_result.is_valid) {
     for (size_t i = 0; i < password_validation_result.errors_count; i++) {
-      AccountValidationError password_error;
+      struct account_validation_error password_error;
 
       password_error.key = "password";
       password_error.message = password_validation_result.error_messages[i];
 
       errors_count++;
-      errors = realloc(errors, errors_count * sizeof(AccountValidationError));
+      errors = realloc(errors, errors_count * sizeof(struct account_validation_error));
       errors[errors_count - 1] = password_error;
     }
   }
 
-  AccountValidationResult result;
+  struct account_validation_result result;
 
   result.errors_count = errors_count;
 
