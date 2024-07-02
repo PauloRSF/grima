@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <shared/date.h>
+
 #include <uuid/uuid.h>
 
 // Size in bytes
@@ -24,6 +26,8 @@ struct account {
   char *email;
   char *username;
   struct account_password password;
+  epoch_ms_t created_at;
+  epoch_ms_t updated_at;
 };
 
 void free_account(struct account *account);
@@ -63,7 +67,15 @@ void Account_hash_password(char *plaintext_password,
 
 void AccountRepository_get_next_id(account_id_t account_id);
 
-void AccountRepository_save(struct account *account);
+enum account_repository_save_result {
+  ACCOUNT_REPOSITORY_SAVE_SUCCESS,
+  ACCOUNT_REPOSITORY_SAVE_EMAIL_ALREADY_TAKEN,
+  ACCOUNT_REPOSITORY_SAVE_USERNAME_ALREADY_TAKEN,
+  ACCOUNT_REPOSITORY_SAVE_APPLICATION_ERROR,
+};
+
+enum account_repository_save_result
+AccountRepository_save(struct account *account);
 
 #ifdef DEV
 // ----- Development utils -----

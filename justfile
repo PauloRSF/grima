@@ -1,7 +1,6 @@
 output_file := `mktemp`
 source_files := `find -not -path './misc/*' -name '*.c' -type f -printf '%p '`
-compilation_flags := "-g -O3 -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Ilib/wormtongue -Ivendor -Igrima -Igrima/lib -Iinclude -DDEV -D__USE_XOPEN -D_GNU_SOURCE"
-link_flags := "-lpq -luuid -luring -largon2 -lsodium"
+compilation_flags := "-g -O3 -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Ilib/wormtongue -Ivendor -Igrima -Igrima/lib -Igrima/shared -Iinclude -DDEV -D__USE_XOPEN -D_GNU_SOURCE"
 link_flags := "-lpq -luuid -luring -largon2 -lsodium -lcjson"
 
 dev-check:

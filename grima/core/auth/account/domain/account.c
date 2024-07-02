@@ -35,6 +35,10 @@ struct create_account_result Account_create(char *email, char *username, char *p
   Account_hash_password(clean_password, &account->password);
   free(clean_password);
 
+  epoch_ms_t now = current_unix_timestamp();
+  account->created_at = now;
+  account->updated_at = now;
+
   result.is_valid = true;
   result.value.account = account;
 
@@ -59,10 +63,17 @@ void Account_pretty_print(struct account *account) {
   for (size_t i = 0; i < ACCOUNT_PASSWORD_HASH_SIZE; i++)
     snprintf((char *)&password_hash_str[i * 2], 3, "%02x", account->password.hash[i]);
 
+  char created_at_str[ISO_TIME_LENGTH];
+  unix_timestamp_to_iso8601(account->created_at, created_at_str);
+
+  char updated_at_str[ISO_TIME_LENGTH];
+  unix_timestamp_to_iso8601(account->updated_at, updated_at_str);
 
   printf("Account {\n\tID = \"%s\",\n\temail = \"%s\",\n\tusername = "
-         "\"%s\",\n\tpassword = {\n\t\tsalt = \"%s\"\n\t\thash = \"%s\"\n\t}\n}\n",
-         id_str, account->email, account->username, password_salt_str, password_hash_str);
+         "\"%s\",\n\tpassword = {\n\t\tsalt = \"%s\"\n\t\thash = \"%s\"\n\t}\n\tcreated_at = "
+         "\"%s\"\n\tupdated_at = \"%s\"\n}\n",
+         id_str, account->email, account->username, password_salt_str, password_hash_str,
+         created_at_str, updated_at_str);
 }
 
 #endif
