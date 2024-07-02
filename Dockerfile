@@ -3,7 +3,7 @@ FROM debian:12.5
 WORKDIR /app
 
 RUN apt update
-RUN apt install -y git curl wget build-essential libpq5 libpq-dev uuid-dev valgrind liburing2 liburing-dev libargon2-1 libargon2-dev libsodium23 libsodium-dev entr
+RUN apt install -y git curl wget build-essential libpq5 libpq-dev uuid-dev valgrind liburing2 liburing-dev libargon2-1 libargon2-dev libsodium23 libsodium-dev libcjson1 libcjson-dev entr
 
 RUN curl --proto '=https' --tlsv1.2 -sSf -o rust.sh https://sh.rustup.rs
 RUN sh rust.sh -y
