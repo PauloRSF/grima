@@ -13,7 +13,9 @@
 #define ACCOUNT_PARAMS_COUNT 7
 #define POSTGRES_CONSTRAINT_VIOLATION_ERROR_CODE "23505"
 
-void AccountRepository_get_next_id(account_id_t account_id) { uuid_generate(account_id); };
+void AccountRepository_get_next_id(account_id_t account_id) {
+  uuid_generate(account_id);
+};
 
 struct account_params {
   const char *values[ACCOUNT_PARAMS_COUNT];
@@ -61,10 +63,36 @@ struct account_params build_account_params(struct account *account) {
   return params;
 }
 
-enum account_repository_save_result AccountRepository_save(struct account *account) {
+enum account_repository_save_result
+map_postgres_error_to_save_result(PGresult *result) {
+  char *error_type = PQresultErrorField(result, PG_DIAG_SQLSTATE);
+
+  bool is_unique_constraint_violation =
+      strcmp(error_type, POSTGRES_CONSTRAINT_VIOLATION_ERROR_CODE) == 0;
+
+  if (!is_unique_constraint_violation) {
+    return ACCOUNT_REPOSITORY_SAVE_APPLICATION_ERROR;
+  }
+
+  char *constraint_name = PQresultErrorField(result, PG_DIAG_CONSTRAINT_NAME);
+
+  if (strcmp(constraint_name, "account_unique_email") == 0) {
+    return ACCOUNT_REPOSITORY_SAVE_EMAIL_ALREADY_TAKEN;
+  }
+
+  if (strcmp(constraint_name, "account_unique_username") == 0) {
+    return ACCOUNT_REPOSITORY_SAVE_USERNAME_ALREADY_TAKEN;
+  }
+
+  return ACCOUNT_REPOSITORY_SAVE_APPLICATION_ERROR;
+}
+
+enum account_repository_save_result
+AccountRepository_save(struct account *account) {
   PGconn *connection = get_database_connection();
 
-  const char *query = "INSERT INTO accounts (id, email, username, password_salt, password_hash, "
+  const char *query = "INSERT INTO accounts (id, email, username, "
+                      "password_salt, password_hash, "
                       "created_at, updated_at) "
                       "VALUES ($1, $2, $3, $4, $5, $6, $7)";
 
@@ -72,42 +100,26 @@ enum account_repository_save_result AccountRepository_save(struct account *accou
 
   cpino_log_debug("[DATABASE] %s", query);
 
-  PGresult *result = PQexecParams(connection, query, ACCOUNT_PARAMS_COUNT, NULL, params.values,
-                                  params.lengths, params.formats, 0);
+  PGresult *result =
+      PQexecParams(connection, query, ACCOUNT_PARAMS_COUNT, NULL, params.values,
+                   params.lengths, params.formats, 0);
 
   if (PQresultStatus(result) == PGRES_COMMAND_OK) {
     PQclear(result);
     return ACCOUNT_REPOSITORY_SAVE_SUCCESS;
   }
 
-  char *message = PQresultVerboseErrorMessage(result, PQERRORS_VERBOSE, PQSHOW_CONTEXT_ALWAYS);
+  char *message = PQresultVerboseErrorMessage(result, PQERRORS_VERBOSE,
+                                              PQSHOW_CONTEXT_ALWAYS);
 
   cpino_log_error("[DATABASE] Failed to insert Account: %s", message);
 
   PQfreemem(message);
 
-  char *error_type = PQresultErrorField(result, PG_DIAG_SQLSTATE);
-
-  bool is_unique_constraint_violation =
-      strcmp(error_type, POSTGRES_CONSTRAINT_VIOLATION_ERROR_CODE) == 0;
-
-  if (!is_unique_constraint_violation) {
-    PQclear(result);
-    return ACCOUNT_REPOSITORY_SAVE_APPLICATION_ERROR;
-  }
-
-  char *constraint_name = PQresultErrorField(result, PG_DIAG_CONSTRAINT_NAME);
-
-  if (strcmp(constraint_name, "account_unique_email") == 0) {
-    PQclear(result);
-    return ACCOUNT_REPOSITORY_SAVE_EMAIL_ALREADY_TAKEN;
-  }
-
-  if (strcmp(constraint_name, "account_unique_username") == 0) {
-    PQclear(result);
-    return ACCOUNT_REPOSITORY_SAVE_USERNAME_ALREADY_TAKEN;
-  }
+  enum account_repository_save_result save_error =
+      map_postgres_error_to_save_result(result);
 
   PQclear(result);
-  return ACCOUNT_REPOSITORY_SAVE_APPLICATION_ERROR;
+
+  return save_error;
 }

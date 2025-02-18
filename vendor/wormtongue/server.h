@@ -9,24 +9,22 @@
 
 #define CLIENT_RECEIVE_BUFFER_SIZE 2048
 
-typedef void (*Logger)(const char *restrict format, ...);
+typedef void (*wormtongue_log_fn)(char *format, ...);
 
-typedef struct server_context {
+typedef struct wormtongue_server_context {
   int server_descriptor;
-  Logger logger;
+  wormtongue_log_fn log;
 } WormtongueServerContext;
 
-typedef void (*RequestHandler)(WormtongueServerContext *ctx, Request *request,
-                               Response *response);
+typedef void (*RequestHandler)(Request *request, Response *response);
 
-WormtongueServerContext setup_server(int port, Logger logger);
+struct wormtongue_server_context setup_server(int port, wormtongue_log_fn log);
 
-void start_server(WormtongueServerContext *ctx, RequestHandler handle_request,
-                  bool blocking);
+void start_server(struct wormtongue_server_context *ctx,
+                  RequestHandler handle_request, bool blocking);
 
-void shutdown_server(WormtongueServerContext *ctx);
+void shutdown_server(struct wormtongue_server_context *ctx);
 
-void send_response(WormtongueServerContext *ctx, Request *request,
-                   Response *response);
+void send_response(Request *request, Response *response);
 
 #endif

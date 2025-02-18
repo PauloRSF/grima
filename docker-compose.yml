@@ -6,7 +6,8 @@ services:
       - .:/app
     ports:
       - 3001:3001
-    command: "just dev"
+      - 5001:5001
+    command: "just gdb"
     tty: true
     stdin_open: true
     environment:

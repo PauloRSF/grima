@@ -14,6 +14,10 @@ valgrind:
   @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}
   @valgrind --leak-check=full --track-origins=yes {{output_file}}
 
+gdb:
+  @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}
+  @~/.local/bin/gdbgui --host 0.0.0.0 --port 5001 {{output_file}}
+
 create-development-db:
   docker compose cp ./sql/init.development.sql postgres:/opt
   docker compose exec postgres psql -U postgres -f /opt/init.development.sql

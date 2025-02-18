@@ -1,9 +1,9 @@
-FROM debian:12.5
+FROM debian:latest
 
 WORKDIR /app
 
 RUN apt update
-RUN apt install -y git curl wget build-essential libpq5 libpq-dev uuid-dev valgrind liburing2 liburing-dev libargon2-1 libargon2-dev libsodium23 libsodium-dev libcjson1 libcjson-dev entr
+RUN apt install -y git curl wget build-essential python3 pipx libpq5 libpq-dev uuid-dev valgrind liburing2 liburing-dev libargon2-1 libargon2-dev libsodium23 libsodium-dev libcjson1 libcjson-dev entr
 
 RUN curl --proto '=https' --tlsv1.2 -sSf -o rust.sh https://sh.rustup.rs
 RUN sh rust.sh -y
@@ -20,5 +20,7 @@ RUN bash ./nvm.sh
 RUN rm /usr/bin/sh && ln -s /usr/bin/bash /usr/bin/sh
 
 RUN source /root/.bashrc && nvm install 20 && npm i -g pino-pretty
+
+RUN pipx install gdbgui
 
 CMD ["just", "dev"]
