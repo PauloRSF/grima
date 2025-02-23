@@ -49,13 +49,9 @@ Account_validate_data(char *email, char *username, char *password);
 
 // ----- Account Creation -----
 
-struct create_account_result {
-  bool is_valid;
-  union {
-    struct account *account;
-    struct account_validation_error *errors;
-  } value;
-};
+typedef struct account *create_account_success_value;
+typedef struct account_validation_error *create_account_error_value;
+DECLARE_RESULT_STRUCT(create_account_result, create_account_success_value, create_account_error_value);
 
 struct create_account_result Account_create(char *email, char *username,
                                             char *password);

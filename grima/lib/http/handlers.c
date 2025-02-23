@@ -27,7 +27,5 @@ void ping_handler(Request *request, Response *response) {
 
   add_header(response->headers, "Content-Type", "text/plain");
 
-  printf("Pong hit %d\n", request->remote_socket);
-
   send_response(request, response);
 }

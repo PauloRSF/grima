@@ -51,27 +51,27 @@ void start_app(AppContext *app_ctx) {
     return shutdown_app(*app_ctx);
   };
 
-  // struct create_account_result result = Account_create("email@foo.bar", "foobar", "Foo123foo!");
+  struct create_account_result result = Account_create("email@foo.bar", "foobar", "Foo123foo!");
 
-  // if (result.is_valid) {
-  //   struct account *account = result.value.account;
+  if (result.success) {
+    struct account *account = result.success_value;
 
-  //   Account_pretty_print(account);
+    Account_pretty_print(account);
 
-  //   enum account_repository_save_result res = AccountRepository_save(result.value.account);
+    enum account_repository_save_result res = AccountRepository_save(result.success_value);
 
-  //   printf("AccountRepository_save result: %d\n", res);
-  // } else {
-  //   struct account_validation_error *errors = result.value.errors;
+    printf("AccountRepository_save result: %d\n", res);
+  } else {
+    struct account_validation_error *errors = result.error_value;
 
-  //   for (size_t i = 0; i < 2; i++) {
-  //     struct account_validation_error error = errors[i];
+    for (size_t i = 0; i < 2; i++) {
+      struct account_validation_error error = errors[i];
 
-  //     printf("Error: [%s] %s\n", error.key, error.message);
-  //   }
-  // }
+      printf("Error: [%s] %s\n", error.key, error.message);
+    }
+  }
 
-  getchar();
+  // getchar();
 }
 
 void shutdown_app(AppContext app_ctx) {

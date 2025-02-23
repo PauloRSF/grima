@@ -19,8 +19,8 @@ struct create_account_result Account_create(char *email, char *username, char *p
       Account_validate_data(clean_email, clean_username, clean_password);
 
   if (validation_result.errors_count > 0) {
-    result.is_valid = false;
-    result.value.errors = validation_result.errors;
+    result.success = false;
+    result.error_value = validation_result.errors;
 
     return result;
   }
@@ -39,8 +39,8 @@ struct create_account_result Account_create(char *email, char *username, char *p
   account->created_at = now;
   account->updated_at = now;
 
-  result.is_valid = true;
-  result.value.account = account;
+  result.success = true;
+  result.success_value = account;
 
   return result;
 }
