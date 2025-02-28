@@ -63,8 +63,8 @@ struct account_params build_account_params(struct account *account) {
   return params;
 }
 
-enum account_repository_save_result
-map_postgres_error_to_save_result(PGresult *result) {
+enum account_repository_save_error
+map_postgres_error_to_domain_error(PGresult *result) {
   char *error_type = PQresultErrorField(result, PG_DIAG_SQLSTATE);
 
   bool is_unique_constraint_violation =
@@ -87,7 +87,7 @@ map_postgres_error_to_save_result(PGresult *result) {
   return ACCOUNT_REPOSITORY_SAVE_APPLICATION_ERROR;
 }
 
-enum account_repository_save_result
+struct account_repository_save_result
 AccountRepository_save(struct account *account) {
   PGconn *connection = get_database_connection();
 
@@ -106,7 +106,10 @@ AccountRepository_save(struct account *account) {
 
   if (PQresultStatus(result) == PGRES_COMMAND_OK) {
     PQclear(result);
-    return ACCOUNT_REPOSITORY_SAVE_SUCCESS;
+
+    return (struct account_repository_save_result){
+        .success = true,
+    };
   }
 
   char *message = PQresultVerboseErrorMessage(result, PQERRORS_VERBOSE,
@@ -116,10 +119,52 @@ AccountRepository_save(struct account *account) {
 
   PQfreemem(message);
 
-  enum account_repository_save_result save_error =
-      map_postgres_error_to_save_result(result);
+  enum account_repository_save_error save_error =
+      map_postgres_error_to_domain_error(result);
+
+  PQclear(result);
+  
+  struct account_repository_save_result error_result = {
+    .success = false,
+  };
+
+  error_result.value.error = save_error;
+
+  return error_result;
+}
+
+bool AccountRepository_exists_by_id(account_id_t account_id) {
+  PGconn *connection = get_database_connection();
+
+  const char *query = "SELECT COUNT(*) FROM accounts WHERE id = $1";
+
+  const char *values[1] = {account_id};
+  int lengths[1] = {16};
+  int formats[1] = {1};
+
+  cpino_log_debug("[DATABASE] %s", query);
+
+  PGresult *result =
+      PQexecParams(connection, query, 1, NULL, values, lengths, formats, 0);
+
+  if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+    char *message = PQresultVerboseErrorMessage(result, PQERRORS_VERBOSE,
+                                                PQSHOW_CONTEXT_ALWAYS);
+
+    cpino_log_error("[DATABASE] Failed to check if Account exists: %s", message);
+
+    PQfreemem(message);
+
+    PQclear(result);
+
+    return false;
+  }
+
+  char *count = PQgetvalue(result, 0, 0);
+
+  bool exists = strcmp(count, "1") == 0;
 
   PQclear(result);
 
-  return save_error;
+  return exists;
 }
