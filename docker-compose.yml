@@ -7,7 +7,7 @@ services:
     ports:
       - 3001:3001
       - 5001:5001
-    command: "just gdb"
+    command: "just dev"
     tty: true
     stdin_open: true
     environment:
@@ -18,7 +18,7 @@ services:
     image: postgres:15.4
     volumes:
       - development_data:/var/lib/postgresql/data
-      - ./sql:/scripts
+      - ./grima/lib/database/migrations:/sql
     ports:
       - 5432:5432
     environment:

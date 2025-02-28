@@ -22,6 +22,22 @@ bool connect_database(char *connection_uri) {
 
   cpino_log_info("[DATABASE] Database connected");
 
+  const char *query = "SELECT 1+1";
+
+  cpino_log_debug("[DATABASE] %s", "SELECT 1+1");
+
+  PGresult *result = PQexecParams(connection, query, 0, NULL, NULL, NULL, NULL, 0);
+
+  if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+    PQclear(result);
+
+    char *message = PQresultVerboseErrorMessage(result, PQERRORS_VERBOSE, PQSHOW_CONTEXT_ALWAYS);
+
+    cpino_log_error("[DATABASE] Database is not healthy: %s", message);
+
+    return false;
+  }
+
   set_database_connection(connection);
 
   return true;

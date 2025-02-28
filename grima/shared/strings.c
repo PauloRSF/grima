@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -28,3 +29,5 @@ char *trim_whitespace(char *value) {
 
   return trimmed;
 }
+
+bool is_blank_string(char *value) { return value == NULL || !strcmp(value, ""); }

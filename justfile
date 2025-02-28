@@ -1,5 +1,5 @@
 output_file := `mktemp`
-source_files := `find -not -path './misc/*' -name '*.c' -type f -printf '%p '`
+source_files := `find . -name '*.c' -type f | grep -v './misc/' | xargs`
 compilation_flags := "-g -O3 -I/usr/include/postgresql -L/usr/include/postgresql/libpq -Ilib -Ilib/wormtongue -Ivendor -Igrima -Igrima/lib -Igrima/shared -Iinclude -DDEV -D__USE_XOPEN -D_GNU_SOURCE"
 link_flags := "-lpq -luuid -luring -largon2 -lsodium -lcjson"
 
@@ -16,12 +16,24 @@ valgrind:
 
 gdb:
   @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}
-  @~/.local/bin/gdbgui --host 0.0.0.0 --port 5001 {{output_file}}
+  @gdb {{output_file}}
 
-create-development-db:
-  docker compose cp ./sql/init.development.sql postgres:/opt
-  docker compose exec postgres psql -U postgres -f /opt/init.development.sql
+format:
+  @clang-format -i {{source_files}}
 
-reset-development-db:
+docker-format:
+  @docker compose run -it app bash -c "clang-format -i {{source_files}}"
+
+app-shell:
+  docker compose run -it app /bin/bash || :
+
+db-shell:
+  docker compose run -it postgres psql -U postgres || :
+
+db-migrate:
+  docker compose exec postgres bash -c "find /sql -type f -exec psql -U postgres -d grima_development -f {} \;"
+
+db-reset:
   docker compose exec postgres psql -U postgres -c 'DROP DATABASE grima_development'
-  just create-development-db
+  docker compose exec postgres psql -U postgres -c 'CREATE DATABASE grima_development'
+  just db-migrate
