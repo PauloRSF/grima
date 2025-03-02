@@ -3,7 +3,8 @@
 
 #include <stdbool.h>
 
-char *trim_whitespace(char *value);
 bool is_blank_string(char *value);
+char *clone_string(char *value);
+char *clone_and_trim_string(char *value);
 
 #endif

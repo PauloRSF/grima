@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -12,7 +13,9 @@ epoch_ms_t current_unix_timestamp() {
   return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
-void unix_timestamp_to_iso8601(epoch_ms_t timestamp, char *buffer) {
+char* unix_timestamp_to_iso8601(epoch_ms_t timestamp) {
+  char *buffer = malloc(ISO_TIME_LENGTH + 1);
+
   time_t time = timestamp / 1000;
   struct tm tm;
   gmtime_r(&time, &tm);
@@ -24,4 +27,8 @@ void unix_timestamp_to_iso8601(epoch_ms_t timestamp, char *buffer) {
 
   strcat(buffer, millis);
   strcat(buffer, "Z");
+
+  buffer[ISO_TIME_LENGTH] = '\0';
+
+  return buffer;
 }

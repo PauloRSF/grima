@@ -4,26 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <shared/errors.h>
 #include <shared/result.h>
 #include <shared/strings.h>
 
-#include <hashmap.h>
-
 #include "../author.h"
 
-int compare_author_validation_error(const void *a, const void *b, void *udata) {
-  const struct author_validation_error *ua = a;
-  const struct author_validation_error *ub = b;
-
-  return strcmp(ua->field, ub->field);
-}
-
-uint64_t hash_author_validation_error(const void *item, uint64_t seed0, uint64_t seed1) {
-  const struct author_validation_error *entry = item;
-  return hashmap_sip(entry->field, strlen(entry->field), seed0, seed1);
-}
-
-char **validate_username(char *username) {
+char **validate_author_username(char *username) {
   if (username == NULL) {
     char **errors = malloc(2 * sizeof(char *));
     errors[0] = "is required";
@@ -82,24 +69,22 @@ char **validate_username(char *username) {
   return errors;
 }
 
-author_validation_errors validate_author(struct author *author) {
-  author_validation_errors validation_errors =
-      hashmap_new(sizeof(struct author_validation_error), 1, 0, 0, hash_author_validation_error,
-                  compare_author_validation_error, NULL, NULL);
+ValidationErrors validate_author(struct author *author) {
+  ValidationErrors validation_errors = ValidationErrors_new();
 
-  char **username_validation_errors = validate_username(author->username);
+  char **username_validation_errors = validate_author_username(author->username);
 
   if (username_validation_errors != NULL) {
-    struct author_validation_error username_error = {
-        .field = "username",
-        .errors = username_validation_errors,
-    };
+    size_t username_validation_errors_count = 0;
 
-    hashmap_set(validation_errors, &username_error);
+    while (username_validation_errors[username_validation_errors_count] != NULL)
+      username_validation_errors_count++;
+
+    ValidationErrors_add_many(validation_errors, "username", username_validation_errors,
+                              username_validation_errors_count);
   }
 
-  if (hashmap_count(validation_errors) == 0) {
-    hashmap_free(validation_errors);
+  if (ValidationErrors_fields_count(validation_errors) == 0) {
     return NULL;
   }
 
@@ -109,31 +94,23 @@ author_validation_errors validate_author(struct author *author) {
 struct create_author_result Author_create(char *username, char *bio, char *image) {
   struct create_author_result result;
 
-  char *clean_username = trim_whitespace(username);
-  char *clean_bio = is_blank_string(bio) ? NULL : trim_whitespace(bio);
-  char *clean_image = is_blank_string(image) ? NULL : trim_whitespace(image);
+  char *trimmed_username = clone_and_trim_string(username);
+  char *trimmed_bio = is_blank_string(bio) ? NULL : clone_and_trim_string(bio);
+  char *trimmed_image = is_blank_string(image) ? NULL : clone_and_trim_string(image);
 
   struct author *author = malloc(sizeof(struct author));
 
-  author->username = clean_username;
-  author->bio = clean_bio;
-  author->image = clean_image;
+  author->username = trimmed_username;
+  author->bio = trimmed_bio;
+  author->image = trimmed_image;
 
-  author_validation_errors validation_errors = validate_author(author);
+  ValidationErrors validation_errors = validate_author(author);
 
   if (validation_errors != NULL) {
     free(author);
 
     result.success = false;
-
-    result.value.error = (struct author_creation_error){
-        .kind = AUTHOR_VALIDATION_ERROR,
-        .error =
-            {
-                .validation_errors = validation_errors,
-            },
-    };
-    ;
+    result.value.error = validation_errors;
 
     return result;
   }
@@ -141,7 +118,7 @@ struct create_author_result Author_create(char *username, char *bio, char *image
   epoch_ms_t now = current_unix_timestamp();
   author->created_at = now;
   author->updated_at = now;
-  strcpy(author->id, AuthorRepository_get_next_id());
+  author->id = AuthorRepository_get_next_id();
 
   result.success = true;
   result.value.success = author;
@@ -171,38 +148,19 @@ void Author_free(struct author *author) {
 #include <uuid/uuid.h>
 
 void Author_show(struct author *author) {
-  char created_at_str[ISO_TIME_LENGTH];
-  unix_timestamp_to_iso8601(author->created_at, created_at_str);
-
-  char updated_at_str[ISO_TIME_LENGTH];
-  unix_timestamp_to_iso8601(author->updated_at, updated_at_str);
-
-  printf("Author {\n\tID = \"%s\","
+  printf("Author {\n\tid = \"%s\","
          "\n\tusername = \"%s\",\n\tbio = \"%s\",\n\timage = \"%s\",\n\tcreated_at = "
          "\"%s\"\n\tupdated_at = \"%s\"\n}\n",
-         author->id, author->username, author->bio, author->image, created_at_str, updated_at_str);
+         author->id, author->username, author->bio, author->image, unix_timestamp_to_iso8601(author->created_at), unix_timestamp_to_iso8601(author->updated_at));
 }
 
-void Author_show_creation_error(struct author_creation_error creation_error) {
-  if (creation_error.kind == AUTHOR_VALIDATION_ERROR) {
-    author_validation_errors validation_errors = creation_error.error.validation_errors;
+void Author_show_creation_result(struct create_author_result result) {
+  printf("Author creation: %s\n", result.success ? "success" : "failed");
 
-    void *item;
-    size_t i = 0;
-
-    while (hashmap_iter(validation_errors, &i, &item)) {
-      struct author_validation_error *validation_error = item;
-
-      printf("[.%s]\n", validation_error->field);
-
-      char **errors = validation_error->errors;
-
-      for (size_t j = 0; errors[j]; j++) {
-        printf("  - %s\n", errors[j]);
-      }
-    }
+  if (result.success) {
+    Author_show(result.value.success);
   } else {
-    printf("Error: %d\n", creation_error.kind);
+    ValidationErrors_show(result.value.error);
   }
 }
 

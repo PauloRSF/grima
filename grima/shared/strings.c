@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *trim_whitespace(char *value) {
+char *clone_and_trim_string(char *value) {
   if (value == NULL)
     return NULL;
 
@@ -31,3 +31,16 @@ char *trim_whitespace(char *value) {
 }
 
 bool is_blank_string(char *value) { return value == NULL || !strcmp(value, ""); }
+
+char *clone_string(char *value) {
+  if (value == NULL)
+    return NULL;
+
+  size_t length = strlen(value);
+
+  char *clone = malloc(length + 1);
+
+  strcpy(clone, value);
+
+  return clone;
+}

@@ -3,7 +3,8 @@
 
 #include <libpq-fe.h>
 
-#define POSTGRES_CONSTRAINT_VIOLATION_ERROR_CODE "23505"
+#define POSTGRES_UNIQUE_VIOLATION_ERROR_CODE "23505"
+#define POSTGRES_FOREIGN_KEY_VIOLATION_ERROR_CODE "23503"
 
 PGconn *get_database_connection();
 

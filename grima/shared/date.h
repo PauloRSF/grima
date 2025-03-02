@@ -8,7 +8,6 @@ typedef unsigned long long epoch_ms_t;
 
 epoch_ms_t current_unix_timestamp();
 
-void unix_timestamp_to_iso8601(epoch_ms_t timestamp,
-                               char buffer[ISO_TIME_LENGTH]);
+char* unix_timestamp_to_iso8601(epoch_ms_t timestamp);
 
 #endif

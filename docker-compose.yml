@@ -7,7 +7,7 @@ services:
     ports:
       - 3001:3001
       - 5001:5001
-    command: "just dev"
+    command: "just dev-valgrind"
     tty: true
     stdin_open: true
     environment:

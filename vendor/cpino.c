@@ -30,8 +30,7 @@ char *build_default_log_string(unsigned short int level, char *message) {
 
   char *default_log_string_format = "{\"level\":\"%s\",\"time\":%llu,\"pid\":%d,\"msg\":\"%s\"}";
 
-  int default_log_string_length =
-      snprintf(NULL, 0, default_log_string_format, level_string, timestamp, 4242, message);
+  int default_log_string_length = snprintf(NULL, 0, default_log_string_format, level_string, timestamp, 4242, message);
 
   char *default_log_string = malloc(default_log_string_length + 1);
 

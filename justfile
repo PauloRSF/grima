@@ -14,6 +14,11 @@ valgrind:
   @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}
   @valgrind --leak-check=full --track-origins=yes {{output_file}}
 
+dev-valgrind:
+  @mkdir -p log
+  @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}
+  @sh -c 'source /root/.bashrc && valgrind --leak-check=full --track-origins=yes {{output_file}} 2> log/`date -Iseconds`_valgrind.txt | npx pino-pretty -c'
+
 gdb:
   @gcc {{compilation_flags}} {{source_files}} {{link_flags}} -o {{output_file}}
   @gdb {{output_file}}
@@ -22,7 +27,7 @@ format:
   @clang-format -i {{source_files}}
 
 docker-format:
-  @docker compose run -it app bash -c "clang-format -i {{source_files}}"
+  @docker compose run -it --rm app bash -c "clang-format -i {{source_files}}"
 
 app-shell:
   docker compose run -it app /bin/bash || :

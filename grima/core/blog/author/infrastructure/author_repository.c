@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -53,26 +54,23 @@ struct author_params build_author_params(struct author *author) {
   params.lengths[3] = author->image ? strlen(author->image) : 0;
   params.formats[3] = 0;
 
-  params.values[4] = calloc(ISO_TIME_LENGTH, sizeof(char));
-  unix_timestamp_to_iso8601(author->updated_at, (char *)params.values[4]);
+  params.values[4] = unix_timestamp_to_iso8601(author->updated_at);
   params.lengths[4] = ISO_TIME_LENGTH;
   params.formats[4] = 0;
 
-  params.values[5] = calloc(ISO_TIME_LENGTH, sizeof(char));
-  unix_timestamp_to_iso8601(author->updated_at, (char *)params.values[5]);
+  params.values[5] = unix_timestamp_to_iso8601(author->updated_at);
   params.lengths[5] = ISO_TIME_LENGTH;
   params.formats[5] = 0;
 
   return params;
 }
 
-enum author_repository_save_error map_postgres_error_to_domain_error(PGresult *result) {
+enum author_repository_save_error map_author_save_postgres_error_to_domain_error(PGresult *result) {
   char *error_type = PQresultErrorField(result, PG_DIAG_SQLSTATE);
 
-  bool is_unique_constraint_violation =
-      strcmp(error_type, POSTGRES_CONSTRAINT_VIOLATION_ERROR_CODE) == 0;
+  bool is_unique_violation = strcmp(error_type, POSTGRES_UNIQUE_VIOLATION_ERROR_CODE) == 0;
 
-  if (!is_unique_constraint_violation)
+  if (!is_unique_violation)
     return AUTHOR_REPOSITORY_SAVE_APPLICATION_ERROR;
 
   char *constraint_name = PQresultErrorField(result, PG_DIAG_CONSTRAINT_NAME);
@@ -93,8 +91,8 @@ struct author_repository_save_result AuthorRepository_save(struct author *author
 
   cpino_log_debug("[DATABASE] %s", query);
 
-  PGresult *result = PQexecParams(connection, query, AUTHOR_PARAMS_COUNT, NULL, params.values,
-                                  params.lengths, params.formats, 0);
+  PGresult *result =
+      PQexecParams(connection, query, AUTHOR_PARAMS_COUNT, NULL, params.values, params.lengths, params.formats, 0);
 
   if (PQresultStatus(result) == PGRES_COMMAND_OK) {
     PQclear(result);
@@ -114,9 +112,51 @@ struct author_repository_save_result AuthorRepository_save(struct author *author
       .success = false,
   };
 
-  error_result.value.error = map_postgres_error_to_domain_error(result);
+  error_result.value.error = map_author_save_postgres_error_to_domain_error(result);
 
   PQclear(result);
 
   return error_result;
+}
+
+struct author_repository_exists_by_id_result AuthorRepository_exists_by_id(char *author_id) {
+  PGconn *connection = get_database_connection();
+
+  const char *query = "SELECT COUNT(*) FROM authors WHERE id = $1";
+
+  const char *values[1] = {author_id};
+  int lengths[1] = {strlen(author_id)};
+  int formats[1] = {0};
+
+  cpino_log_debug("[DATABASE] %s", query);
+
+  PGresult *result = PQexecParams(connection, query, 1, NULL, values, lengths, formats, 0);
+
+  if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+    char *message = PQresultVerboseErrorMessage(result, PQERRORS_VERBOSE, PQSHOW_CONTEXT_ALWAYS);
+
+    cpino_log_error("[DATABASE] Failed to check if Author exists: %s", message);
+
+    PQfreemem(message);
+
+    PQclear(result);
+
+    return (struct author_repository_exists_by_id_result){
+        .success = false,
+    };
+  }
+
+  char *count_string = PQgetvalue(result, 0, 0);
+
+  bool exists = atoi(count_string) > 0;
+
+  PQclear(result);
+
+  return (struct author_repository_exists_by_id_result){
+      .success = true,
+      .value =
+          {
+              .success = exists,
+          },
+  };
 }
