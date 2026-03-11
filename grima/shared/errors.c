@@ -71,6 +71,27 @@ void ValidationErrors_add_many(ValidationErrors self, char *field, char **error,
 
 size_t ValidationErrors_fields_count(ValidationErrors self) { return hashmap_count(self); }
 
+// TODO: segfault here
+void ValidationErrors_free(ValidationErrors self) {
+  // void *item;
+  // size_t i = 0;
+
+  // while (hashmap_iter(self, &i, &item)) {
+  //   struct validation_error_entry *entry = item;
+
+  //   char **errors = entry->errors;
+
+  //   for (size_t j = 0; errors[j]; j++) {
+  //     free(errors[j]);
+  //   }
+
+  //   free(errors);
+  //   free(entry);
+  // }
+
+  // hashmap_free(self);
+}
+
 #ifdef DEV
 #include <stdio.h>
 

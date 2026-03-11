@@ -1,37 +1,32 @@
 # Grima
 
-C REST API made (kinda) from scratch just for shits and giggles.
+A pure C implementation of the [RealWorld API](https://github.com/gothinkster/realworld).
 
-Just kidding, the point of doing this is to:
-
-- Learn more about Linux syscalls and io_uring
-- Learn more about app architectures and Domain Driven Design
-- Have fun :p
-
-## How to run it
-
-The app is dockerized, so, there's two ways you can run it:
+## How to run
 
 ### With Docker
 
-First, build the image from the Dockerfile with
-
 ```sh
-docker build -t grima .
-```
-
-Then, run
-
-```sh
-docker compose up
+docker compose up --build
 ```
 
 ### Without Docker
 
-First, [you need to run PostgreSQL](https://www.postgresql.org/download) and add the connection URI to `.env`. See the `.env.example` file for reference.
+You need to install:
 
-Then, you just (pun intended) need to install [just](https://github.com/casey/just). After that, you can run the `dev` script:
+- [PostgreSQL](https://www.postgresql.org/download)
+- [just](https://github.com/casey/just)
+
+After installing those, create a `.env` file. You can use the example one as a starting point:
+
+```sh
+cp .env.example .env
+```
+
+Change the `.env` file variables with the values that suit your setup. Then, start the app with:
 
 ```sh
 just dev
 ```
+
+After the app finishes booting, you can hit `http://localhost:<PORT>` (with `PORT` being the one you set in the .env file)

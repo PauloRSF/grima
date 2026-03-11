@@ -2,20 +2,15 @@
 #define GRIMA_BLOG_AUTHOR_H
 
 #include <stdbool.h>
-#include <stdint.h>
-
-#include <uuid/uuid.h>
 
 #include <shared/date.h>
 #include <shared/result.h>
 #include <shared/errors.h>
 
-#include <hashmap.h>
-
 // ----- Author Entity -----
 
 struct author {
-  char *id;
+  entity_id_t id;
   char *username;
   char *bio;
   char *image;
@@ -36,8 +31,8 @@ struct create_author_result Author_create(char *username, char *bio, char *image
 char *AuthorRepository_get_next_id();
 
 enum author_repository_save_error {
-  AUTHOR_REPOSITORY_SAVE_USERNAME_ALREADY_TAKEN,
   AUTHOR_REPOSITORY_SAVE_APPLICATION_ERROR,
+  AUTHOR_REPOSITORY_SAVE_USERNAME_ALREADY_TAKEN,
 };
 
 RESULT_STRUCT(author_repository_save_result, void *, enum author_repository_save_error);
@@ -46,7 +41,7 @@ struct author_repository_save_result AuthorRepository_save(struct author *author
 
 RESULT_STRUCT(author_repository_exists_by_id_result, bool, void *);
 
-struct author_repository_exists_by_id_result AuthorRepository_exists_by_id(char *author_id);
+struct author_repository_exists_by_id_result AuthorRepository_exists_by_id(entity_id_t author_id);
 
 #ifdef DEV
 

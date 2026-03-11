@@ -2,10 +2,6 @@
 #define GRIMA_BLOG_COMMENT_H
 
 #include <stdbool.h>
-#include <stdint.h>
-
-#include <uuid/uuid.h>
-#include <hashmap.h>
 
 #include <shared/date.h>
 #include <shared/result.h>
@@ -14,9 +10,9 @@
 // ----- Comment Entity -----
 
 struct comment {
-  char *id;
-  char *author_id;
-  char *article_id;
+  entity_id_t id;
+  entity_id_t author_id;
+  entity_id_t article_id;
   char *body;
   epoch_ms_t created_at;
   epoch_ms_t updated_at;
@@ -28,16 +24,16 @@ void Comment_free(struct comment *comment);
 
 RESULT_STRUCT(create_comment_result, struct comment *, ValidationErrors);
 
-struct create_comment_result Comment_create(char *article_id, char *author_id, char *body);
+struct create_comment_result Comment_create(entity_id_t article_id, entity_id_t author_id, char *body);
 
 // ----- Comment Repository -----
 
 char *CommentRepository_get_next_id();
 
 enum comment_repository_save_error {
+  COMMENT_REPOSITORY_SAVE_APPLICATION_ERROR,
   COMMENT_REPOSITORY_SAVE_AUTHOR_NOT_FOUND,
   COMMENT_REPOSITORY_SAVE_ARTICLE_NOT_FOUND,
-  COMMENT_REPOSITORY_SAVE_APPLICATION_ERROR,
 };
 
 RESULT_STRUCT(comment_repository_save_result, void *, enum comment_repository_save_error);

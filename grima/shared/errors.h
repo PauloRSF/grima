@@ -14,6 +14,7 @@ ValidationErrors ValidationErrors_new();
 void ValidationErrors_add(ValidationErrors self, char *field, char *error);
 void ValidationErrors_add_many(ValidationErrors self, char *field, char **error, size_t error_count);
 size_t ValidationErrors_fields_count(ValidationErrors self);
+void ValidationErrors_free(ValidationErrors self);
 
 #ifdef DEV
 

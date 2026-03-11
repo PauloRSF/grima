@@ -10,11 +10,12 @@
 #include <cpino.h>
 
 #include <grima/app.h>
-#include <grima/blog/author.h>
 #include <grima/blog/article.h>
+#include <grima/blog/author.h>
 #include <grima/blog/comment.h>
+#include <grima/blog/favorite.h>
 
-#include "./database/database.h"
+#include <lib/database.h>
 
 #define DATABASE_MODULE_INDEX 0
 
@@ -64,41 +65,71 @@ void start_app(AppContext *app_ctx) {
   };
 }
 
-void shutdown_app(AppContext app_ctx) { cpino_log_info("[BOOT] Shutting down application"); };
+void shutdown_app(AppContext app_ctx) {
+  cpino_log_info("[BOOT] Shutting down application");
+  exit(0);
+};
 
 int main() {
   start_app(&ctx);
 
   struct create_author_result author_creation_result = Author_create("foobar", "", "");
   Author_show_creation_result(author_creation_result);
-  if (!author_creation_result.success) return 1;
+  if (!author_creation_result.success)
+    return 1;
 
   struct author *author = author_creation_result.value.success;
 
   struct author_repository_save_result author_save_result = AuthorRepository_save(author);
   printf("AuthorRepository_save success: %s\n", author_save_result.success ? "true" : "false");
-  if (!author_save_result.success) return 1;
+  if (!author_save_result.success) {
+    printf("AuthorRepository_save error: %d\n", author_save_result.value.error);
+    return 1;
+  }
 
   struct create_article_result article_creation_result =
       Article_create(author->id, "Hello, World!", "This is a test article", "This is the body of the test article");
   Article_show_creation_result(article_creation_result);
-  if (!article_creation_result.success) return 1;
+  if (!article_creation_result.success)
+    return 1;
 
   struct article *article = article_creation_result.value.success;
 
   struct article_repository_save_result article_save_result = ArticleRepository_save(article);
   printf("ArticleRepository_save success: %s\n", article_save_result.success ? "true" : "false");
-  if (!article_save_result.success) return 1;
+  if (!article_save_result.success) {
+    printf("ArticleRepository_save error: %d\n", article_save_result.value.error);
+    return 1;
+  }
 
-  struct create_comment_result comment_creation_result = Comment_create(author->id, article->id, "This is a test comment");
+  struct create_comment_result comment_creation_result =
+      Comment_create(author->id, article->id, "This is a test comment");
   Comment_show_creation_result(comment_creation_result);
-  if (!comment_creation_result.success) return 1;
+  if (!comment_creation_result.success)
+    return 1;
 
   struct comment *comment = comment_creation_result.value.success;
 
   struct comment_repository_save_result comment_save_result = CommentRepository_save(comment);
   printf("CommentRepository_save success: %s\n", comment_save_result.success ? "true" : "false");
-  if (!comment_save_result.success) return 1;
+  if (!comment_save_result.success) {
+    printf("CommentRepository_save error: %d\n", comment_save_result.value.error);
+    return 1;
+  }
+
+  struct create_favorite_result favorite_creation_result = Favorite_create(author->id, article->id);
+  Favorite_show_creation_result(favorite_creation_result);
+  if (!favorite_creation_result.success)
+    return 1;
+
+  struct favorite *favorite = favorite_creation_result.value.success;
+
+  struct favorite_repository_save_result favorite_save_result = FavoriteRepository_save(favorite);
+  printf("FavoriteRepository_save success: %s\n", favorite_save_result.success ? "true" : "false");
+  if (!favorite_save_result.success) {
+    printf("FavoriteRepository_save error: %d\n", favorite_save_result.value.error);
+    return 1;
+  }
 
   return 0;
 }

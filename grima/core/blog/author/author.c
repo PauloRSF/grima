@@ -1,6 +1,6 @@
 #include <ctype.h>
 #include <stdbool.h>
-#include <stdint.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -8,7 +8,7 @@
 #include <shared/result.h>
 #include <shared/strings.h>
 
-#include "../author.h"
+#include "author.h"
 
 char **validate_author_username(char *username) {
   if (username == NULL) {
@@ -85,6 +85,7 @@ ValidationErrors validate_author(struct author *author) {
   }
 
   if (ValidationErrors_fields_count(validation_errors) == 0) {
+    ValidationErrors_free(validation_errors);
     return NULL;
   }
 
@@ -115,6 +116,8 @@ struct create_author_result Author_create(char *username, char *bio, char *image
     return result;
   }
 
+  ValidationErrors_free(validation_errors);
+
   epoch_ms_t now = current_unix_timestamp();
   author->created_at = now;
   author->updated_at = now;
@@ -128,7 +131,7 @@ struct create_author_result Author_create(char *username, char *bio, char *image
 
 void Author_free(struct author *author) {
   if (author->id != NULL)
-    free(author->id);
+    free_entity_id(author->id);
 
   if (author->bio != NULL)
     free(author->bio);
@@ -148,10 +151,21 @@ void Author_free(struct author *author) {
 #include <uuid/uuid.h>
 
 void Author_show(struct author *author) {
-  printf("Author {\n\tid = \"%s\","
-         "\n\tusername = \"%s\",\n\tbio = \"%s\",\n\timage = \"%s\",\n\tcreated_at = "
-         "\"%s\"\n\tupdated_at = \"%s\"\n}\n",
-         author->id, author->username, author->bio, author->image, unix_timestamp_to_iso8601(author->created_at), unix_timestamp_to_iso8601(author->updated_at));
+  char *created_at = unix_timestamp_to_iso8601(author->created_at);
+  char *updated_at = unix_timestamp_to_iso8601(author->updated_at);
+
+  printf("Author {\n\t"
+         "id = \"%s\",\n\t"
+         "username = \"%s\",\n\t"
+         "bio = \"%s\",\n\t"
+         "image = \"%s\",\n\t"
+         "created_at = \"%s\"\n\t"
+         "updated_at = \"%s\"\n"
+         "}\n",
+         author->id, author->username, author->bio, author->image, created_at, updated_at);
+
+  free(created_at);
+  free(updated_at);
 }
 
 void Author_show_creation_result(struct create_author_result result) {

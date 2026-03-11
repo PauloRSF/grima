@@ -2,9 +2,7 @@
 #define GRIMA_BLOG_ARTICLE_H
 
 #include <stdbool.h>
-#include <stdint.h>
 
-#include <uuid/uuid.h>
 #include <hashmap.h>
 
 #include <shared/date.h>
@@ -14,8 +12,8 @@
 // ----- Article Entity -----
 
 struct article {
-  char *id;
-  char *author_id;
+  entity_id_t id;
+  entity_id_t author_id;
   char *slug;
   char *title;
   char *description;
@@ -30,16 +28,16 @@ void Article_free(struct article *article);
 
 RESULT_STRUCT(create_article_result, struct article *, ValidationErrors);
 
-struct create_article_result Article_create(char *author_id, char *title, char *description, char *body);
+struct create_article_result Article_create(entity_id_t author_id, char *title, char *description, char *body);
 
 // ----- Article Repository -----
 
 char *ArticleRepository_get_next_id();
 
 enum article_repository_save_error {
+  ARTICLE_REPOSITORY_SAVE_APPLICATION_ERROR,
   ARTICLE_REPOSITORY_SAVE_AUTHOR_NOT_FOUND,
   ARTICLE_REPOSITORY_SAVE_SLUG_ALREADY_TAKEN,
-  ARTICLE_REPOSITORY_SAVE_APPLICATION_ERROR,
 };
 
 RESULT_STRUCT(article_repository_save_result, void *, enum article_repository_save_error);
@@ -48,7 +46,7 @@ struct article_repository_save_result ArticleRepository_save(struct article *art
 
 RESULT_STRUCT(article_repository_exists_by_id_result, bool, void *);
 
-struct article_repository_exists_by_id_result ArticleRepository_exists_by_id(char *article_id);
+struct article_repository_exists_by_id_result ArticleRepository_exists_by_id(entity_id_t article_id);
 
 #ifdef DEV
 

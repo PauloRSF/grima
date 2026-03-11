@@ -1,29 +1,15 @@
 #include <ctype.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <sys/random.h>
-#include <uuid/uuid.h>
 
+#include <lib/id.h>
 #include <shared/errors.h>
-#include <shared/result.h>
 #include <shared/strings.h>
 
-#include "../article.h"
-
-char *validate_article_author_id(char *author_id) {
-  if (author_id == NULL)
-    return "is required";
-
-  uuid_t uuid;
-
-  if (uuid_parse(author_id, uuid) != 0)
-    return "must be a valid UUID";
-
-  return NULL;
-}
+#include "article.h"
 
 char *validate_article_title(char *title) {
   if (title == NULL)
@@ -64,7 +50,7 @@ char *validate_article_body(char *body) {
 ValidationErrors validate_article(struct article *article) {
   ValidationErrors validation_errors = ValidationErrors_new();
 
-  char *author_id_validation_error = validate_article_author_id(article->author_id);
+  char *author_id_validation_error = validate_entity_id(article->author_id);
 
   if (author_id_validation_error != NULL) {
     ValidationErrors_add(validation_errors, "author_id", author_id_validation_error);
@@ -89,6 +75,7 @@ ValidationErrors validate_article(struct article *article) {
   }
 
   if (ValidationErrors_fields_count(validation_errors) == 0) {
+    ValidationErrors_free(validation_errors);
     return NULL;
   }
 
@@ -120,10 +107,10 @@ char *Article_slugify_title(char *title) {
 
   slug[slug_index] = '\0';
 
-  return realloc(slug, sizeof(char) * slug_index);
+  return realloc(slug, sizeof(char) * (slug_index + 1));
 }
 
-struct create_article_result Article_create(char *author_id, char *title, char *description, char *body) {
+struct create_article_result Article_create(entity_id_t author_id, char *title, char *description, char *body) {
   struct create_article_result result;
 
   char *trimmed_title = clone_and_trim_string(title);
@@ -148,6 +135,8 @@ struct create_article_result Article_create(char *author_id, char *title, char *
     return result;
   }
 
+  ValidationErrors_free(validation_errors);
+
   epoch_ms_t now = current_unix_timestamp();
   article->created_at = now;
   article->updated_at = now;
@@ -162,7 +151,7 @@ struct create_article_result Article_create(char *author_id, char *title, char *
 
 void Article_free(struct article *article) {
   if (article->id != NULL)
-    free(article->id);
+    free_entity_id(article->id);
 
   if (article->title != NULL)
     free(article->title);
@@ -182,11 +171,24 @@ void Article_free(struct article *article) {
 #include <uuid/uuid.h>
 
 void Article_show(struct article *article) {
-  printf("Article {\n\tid = \"%s\",\n\tauthor_id = \"%s\",\n\tslug = \"%s\","
-         "\n\ttitle = \"%s\",\n\tdescription = \"%s\",\n\tbody = \"%s\",\n\tcreated_at = "
-         "\"%s\"\n\tupdated_at = \"%s\"\n}\n",
+  char *created_at = unix_timestamp_to_iso8601(article->created_at);
+  char *updated_at = unix_timestamp_to_iso8601(article->updated_at);
+
+  printf("Article {\n\t"
+         "id = \"%s\",\n\t"
+         "author_id = \"%s\",\n\t"
+         "slug = \"%s\",\n\t"
+         "title = \"%s\",\n\t"
+         "description = \"%s\",\n\t"
+         "body = \"%s\",\n\t"
+         "created_at = \"%s\"\n\t"
+         "updated_at = \"%s\"\n"
+         "}\n",
          article->id, article->author_id, article->slug, article->title, article->description, article->body,
-         unix_timestamp_to_iso8601(article->created_at), unix_timestamp_to_iso8601(article->updated_at));
+         created_at, updated_at);
+
+  free(created_at);
+  free(updated_at);
 }
 
 void Article_show_creation_result(struct create_article_result result) {

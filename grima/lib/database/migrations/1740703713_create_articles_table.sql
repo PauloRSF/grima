@@ -8,5 +8,5 @@ CREATE TABLE articles (
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
   CONSTRAINT article_unique_slug UNIQUE (slug),
-  CONSTRAINT article_has_author FOREIGN KEY (author_id) REFERENCES authors (id)
+  CONSTRAINT article_belongs_to_author FOREIGN KEY (author_id) REFERENCES authors (id)
 );

@@ -1,29 +1,12 @@
-#include <ctype.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
-#include <sys/random.h>
-#include <uuid/uuid.h>
-
+#include <lib/id.h>
 #include <shared/errors.h>
-#include <shared/result.h>
 #include <shared/strings.h>
 
-#include "../comment.h"
-
-char *validate_comment_relation_id(char *author_id) {
-  if (author_id == NULL)
-    return "is required";
-
-  uuid_t uuid;
-
-  if (uuid_parse(author_id, uuid) != 0)
-    return "must be a valid UUID";
-
-  return NULL;
-}
+#include "comment.h"
 
 char *validate_comment_body(char *body) {
   if (body == NULL)
@@ -37,13 +20,13 @@ char *validate_comment_body(char *body) {
 ValidationErrors validate_comment(struct comment *comment) {
   ValidationErrors validation_errors = ValidationErrors_new();
 
-  char *author_id_validation_error = validate_comment_relation_id(comment->author_id);
+  char *author_id_validation_error = validate_entity_id(comment->author_id);
 
   if (author_id_validation_error != NULL) {
     ValidationErrors_add(validation_errors, "author_id", author_id_validation_error);
   }
 
-  char *article_id_validation_error = validate_comment_relation_id(comment->article_id);
+  char *article_id_validation_error = validate_entity_id(comment->article_id);
 
   if (article_id_validation_error != NULL) {
     ValidationErrors_add(validation_errors, "article_id", article_id_validation_error);
@@ -56,13 +39,14 @@ ValidationErrors validate_comment(struct comment *comment) {
   }
 
   if (ValidationErrors_fields_count(validation_errors) == 0) {
+    ValidationErrors_free(validation_errors);
     return NULL;
   }
 
   return validation_errors;
 }
 
-struct create_comment_result Comment_create(char *author_id, char *article_id, char *body) {
+struct create_comment_result Comment_create(entity_id_t author_id, entity_id_t article_id, char *body) {
   struct create_comment_result result;
 
   char *trimmed_body = clone_and_trim_string(body);
@@ -84,6 +68,8 @@ struct create_comment_result Comment_create(char *author_id, char *article_id, c
     return result;
   }
 
+  ValidationErrors_free(validation_errors);
+
   epoch_ms_t now = current_unix_timestamp();
   comment->created_at = now;
   comment->updated_at = now;
@@ -97,7 +83,7 @@ struct create_comment_result Comment_create(char *author_id, char *article_id, c
 
 void Comment_free(struct comment *comment) {
   if (comment->id != NULL)
-    free(comment->id);
+    free_entity_id(comment->id);
 
   if (comment->author_id != NULL)
     free(comment->author_id);
@@ -117,9 +103,21 @@ void Comment_free(struct comment *comment) {
 #include <uuid/uuid.h>
 
 void Comment_show(struct comment *comment) {
-  printf("Comment {\n\tid = \"%s\",\n\tauthor_id = \"%s\",\n\article_id = \"%s\",\n\tbody = \"%s\",\n\tcreated_at = "
-         "\"%s\"\n\tupdated_at = \"%s\"\n}\n",
-         comment->id, comment->author_id, comment->article_id, comment->body, unix_timestamp_to_iso8601(comment->created_at), unix_timestamp_to_iso8601(comment->updated_at));
+  char *created_at = unix_timestamp_to_iso8601(comment->created_at);
+  char *updated_at = unix_timestamp_to_iso8601(comment->updated_at);
+
+  printf("Comment {\n\t"
+         "id = \"%s\",\n\t"
+         "author_id = \"%s\",\n\t"
+         "article_id = \"%s\",\n\t"
+         "body = \"%s\",\n\t"
+         "created_at = \"%s\"\n\t"
+         "updated_at = \"%s\"\n"
+         "}\n",
+         comment->id, comment->author_id, comment->article_id, comment->body, created_at, updated_at);
+
+  free(created_at);
+  free(updated_at);
 }
 
 void Comment_show_creation_result(struct create_comment_result result) {

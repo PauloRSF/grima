@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -13,7 +13,7 @@ epoch_ms_t current_unix_timestamp() {
   return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
-char* unix_timestamp_to_iso8601(epoch_ms_t timestamp) {
+char *unix_timestamp_to_iso8601(epoch_ms_t timestamp) {
   char *buffer = malloc(ISO_TIME_LENGTH + 1);
 
   time_t time = timestamp / 1000;

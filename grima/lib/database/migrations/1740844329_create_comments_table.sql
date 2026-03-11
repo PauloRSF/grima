@@ -5,6 +5,6 @@ CREATE TABLE comments (
   body TEXT,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
-  CONSTRAINT comment_has_author FOREIGN KEY (author_id) REFERENCES authors (id),
-  CONSTRAINT comment_has_article FOREIGN KEY (article_id) REFERENCES articles (id)
+  CONSTRAINT comment_belongs_to_author FOREIGN KEY (author_id) REFERENCES authors (id),
+  CONSTRAINT comment_belongs_to_article FOREIGN KEY (article_id) REFERENCES articles (id)
 );

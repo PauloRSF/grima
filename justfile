@@ -30,13 +30,13 @@ docker-format:
   @docker compose run -it --rm app bash -c "clang-format -i {{source_files}}"
 
 app-shell:
-  docker compose run -it app /bin/bash || :
+  docker compose run -it --rm app /bin/bash || :
 
 db-shell:
-  docker compose run -it postgres psql -U postgres || :
+  docker compose exec postgres /bin/bash || :
 
 db-migrate:
-  docker compose exec postgres bash -c "find /sql -type f -exec psql -U postgres -d grima_development -f {} \;"
+  docker compose exec postgres bash -c "cd /sql && for scr in \$(ls); do echo $(basename \$scr); psql -h 127.0.0.1 -U postgres -d grima_development -f \$scr; done"
 
 db-reset:
   docker compose exec postgres psql -U postgres -c 'DROP DATABASE grima_development'
